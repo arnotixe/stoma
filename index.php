@@ -75,8 +75,11 @@ if ($result = $db->query("SELECT * from tool where ix=$spectool limit 1")) {
 //    printf("Select returned %d rows.\n", $result->num_rows);
    while ($row = $result->fetch_object()){ // bør kun returnere 1...
 // DEBUGGING
-	$out .= "Verktøyet: <b>$row->name</b> (#$spectool)<br>hører hjemme hos $owner->persname,
-		 <br> og akkurat nå har $person->persname det.
+	$out .= "
+<div class=\"contain\">
+<div class=\"toolbox\">
+		 Verktøyet: <b>$row->name</b> (#$spectool)<br>hører hjemme hos $owner->persname,
+		 <br> og akkurat nå har $person->persname det.<p>
 		 <a href=\"tel:$phone\">Ring</a> -
 		 <a href=\"sms:$phone?body=Hei, kan jeg låne $row->name? Mvh $reassign->persname\">SMS</a> -
 		 <a href=\"mailto:$mail?subject=$row->name&amp;body=Hei, kan jeg låne $row->name?%0D%0A%0D%0AMvh $reassign->persname\">Mail</a><p>";
@@ -85,7 +88,9 @@ if ($result = $db->query("SELECT * from tool where ix=$spectool limit 1")) {
 <a href=index.php?t=$spectool&a=r><img src=pix/give.png alt=Return to owner title=\"Returnér\"></a>
 <a href=index.php?t=$spectool&a=t><img src=pix/take.png alt=I'll take it! title=\"Ta\"></a>
 <a href=index.php?t=$spectool&a=p><img src=pix/push.png alt=Assign to... title=\"Gi til...\"></a>
-<p>";
+</div>
+<div class=\"toolbox\">
+";
 
          // IF updating: take
 	 if ($_GET["a"] == "t" ) { // take tool
@@ -176,7 +181,11 @@ if ($result = $db->query("SELECT * from tool where ix=$spectool limit 1")) {
                $eq->close();
             }
 
-$out .= "linker: Bookingkalender - Verktøyliste - Personliste";
+$out .= "
+</div>
+<div>
+<p>
+linker: Bookingkalender - Verktøyliste - Personliste";
    } // fetch tool
    /* free result set */
    $result->close();
@@ -186,6 +195,22 @@ $out .= "linker: Bookingkalender - Verktøyliste - Personliste";
   // LOG THIS
 }
 
+echo "<html>
+<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+<title>Fellesverktøy</title>
+<style>
+.toolbox {
+	border: solid;
+	border-radius: 25px;
+	padding: 15px;
+	margin: 1px;
+	width: 100%;
+}
+.contain {
+	display: inline-block;
+}
+</style>
+<body>";
 echo $out;
 
 // check if this tool's division is the same as logged-in user's
