@@ -76,18 +76,21 @@ if ($result = $db->query("SELECT * from tool where ix=$spectool limit 1")) {
    while ($row = $result->fetch_object()){ // bør kun returnere 1...
 // DEBUGGING
 	$out .= "
-<div class=\"contain\">
-<div class=\"toolbox\">
-		 Verktøyet: <b>$row->name</b> (#$spectool)<br>hører hjemme hos $owner->persname,
-		 <br> og akkurat nå har $person->persname det.<p>
-		 <a href=\"tel:$phone\">Ring</a> -
-		 <a href=\"sms:$phone?body=Hei, kan jeg låne $row->name? Mvh $reassign->persname\">SMS</a> -
-		 <a href=\"mailto:$mail?subject=$row->name&amp;body=Hei, kan jeg låne $row->name?%0D%0A%0D%0AMvh $reassign->persname\">Mail</a><p>";
+		<div class=\"contain\">
+		<div class=\"toolbox\">
+		 Verktøyet: <b>$row->name</b> (#$spectool) (bilde, serienr mv her)<br>hører hjemme hos $owner->persname, og akkurat nå er det:
+		<div class=\"holder\">
+		 $person->persname som har det.<br>
+		 <a href=\"tel:$phone\"><img class=\"tl\" src=\"pix/phone.png\" alt=\"Ring\"></a>
+		 <a href=\"sms:$phone?body=Hei, kan jeg låne $row->name? Mvh $reassign->persname\"><img  class=\"tl\" src=\"pix/sms.png\" alt=\"SMS\"></a>
+		 <a href=\"mailto:$mail?subject=$row->name&amp;body=Hei, kan jeg låne $row->name?%0D%0A%0D%0AMvh $reassign->persname\"><img class=\"tl\"  src=\"pix/mail.png\" alt=\"Mail\"></a><p>
+		</div>
+";
 
 	$out .= "
-<a href=index.php?t=$spectool&a=r><img src=pix/give.png alt=Return to owner title=\"Returnér\"></a>
-<a href=index.php?t=$spectool&a=t><img src=pix/take.png alt=I'll take it! title=\"Ta\"></a>
-<a href=index.php?t=$spectool&a=p><img src=pix/push.png alt=Assign to... title=\"Gi til...\"></a>
+<a href=index.php?t=$spectool&a=r><img  class=\"tl\" src=pix/give.png alt=Return to owner title=\"Returnér\"></a>
+<a href=index.php?t=$spectool&a=t><img  class=\"tl\" src=pix/take.png alt=I'll take it! title=\"Ta\"></a>
+<a href=index.php?t=$spectool&a=p><img  class=\"tl\" src=pix/push.png alt=Assign to... title=\"Gi til...\"></a>
 </div>
 <div class=\"toolbox\">
 ";
@@ -171,7 +174,7 @@ if ($result = $db->query("SELECT * from tool where ix=$spectool limit 1")) {
 	    $out .= "</select></form>";
   	  }
 
-	   $out .= "<p><i>Historikk:</i><br>";
+	   $out .= "<p><i><a href=\"history.php?t=$spectool\">Historikk:</a></i><br>";
   	  // show recent tool history
 	    $qs= "select * from log where tool=$spectool order by date desc limit 10";
 	    if ($eq = $db->query($qs)) {
@@ -199,12 +202,48 @@ echo "<html>
 <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
 <title>Fellesverktøy</title>
 <style>
+ /* unvisited link */
+a:link {
+    color: darkgreen;
+    text-decoration:none;
+    font-style:normal;
+    font-weight:bold;
+}
+
+/* visited link */
+a:visited {
+    color: darkgreen;
+    text-decoration:none;
+}
+
+/* mouse over link */
+a:hover {
+    color: darkgreen;
+    text-decoration:underline;
+}
+
+/* selected link */
+a:active {
+    color: darkgreen;
+    color: underline;
+}
+body {
+	background: #DBFEDB;
+}
+.holder {
+	background: #BAF0BA;
+	padding: 5px;
+	border-radius: 15px;
+	text-align: center;
+}
+.tl {
+	max-width:25%;
+}
 .toolbox {
 	border: solid;
-	border-radius: 25px;
-	padding: 15px;
+	border-radius: 15px;
+	padding: 8px;
 	margin: 1px;
-	width: 100%;
 }
 .contain {
 	display: inline-block;
