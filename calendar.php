@@ -102,7 +102,7 @@ $mth/$yr</a> -
 
 // fetch bookings and put into array
 // select * from booking where date like "$sm%"
-$qs = "select * from booking where date like \"$yr-$mth%\"";
+$qs = "select * from booking where date like \"$yr-$mth%\" and tool=$_SESSION[fvtool]";
 //echo $qs;
 
 $booked=array();

@@ -69,7 +69,7 @@ $week_start = date('Y-m-d', strtotime(date('Y-m-d',$fdaymth). ' - ' . $day . ' d
 	" . date('Y-m-d', strtotime($week_start. ' + 1 days'));
 */
 $out .="
-Bookingkalender for <a href=\"index.php?t=$_GET[t]\">verktøy $_GET[t]</a><p>
+Bookingkalender for <a href=\"index.php?t=$_SESSION[fvtool]\">verktøy $_GET[t]</a><p>
 &lt; Forrige måned    $mth/$yr    Neste måned &gt;
 <p>
 <div>"; // this div is the calendar container
@@ -77,7 +77,7 @@ Bookingkalender for <a href=\"index.php?t=$_GET[t]\">verktøy $_GET[t]</a><p>
 
 // fetch bookings and put into array
 // select * from booking where date like "$sm%"
-$qs = "select * from booking where date like \"$yr-$mth%\"";
+$qs = "select * from booking where date like \"$yr-$mth%\" and tool=$_SESSION[fvtool]";
 //echo $qs;
 
 $booked=array();
@@ -85,7 +85,7 @@ $booked=array();
 if ($qr = $db->query($qs)) {
     while ($bk = $qr->fetch_object()){
 //	$out .= "tool $bk->tool booked by $bk->person on $bk->date<p>";
-	$booked["$bk->date"] = $bk->person; // add to array
+	$booked["$bk->date"][$bk->hour] = $bk->person; // add to array
     }
 /* else {
        logg(NULL,NULL,NULL,$spectool,"No bookings for this tool in $yr-$mth");
@@ -95,7 +95,7 @@ if ($qr = $db->query($qs)) {
 }
 
 
-
+// all this must go into meeting_day.php
 // toggle day, if specified
 if ( !empty($_GET["td"]) ){
 	$selector = mysql_escape_string($_GET["td"]);
@@ -121,11 +121,8 @@ if ( !empty($_GET["td"]) ){
 	}
 }
 
-
-
-
 $cntr=0;
-for ($w=6; $w<=5; $w++) {
+for ($w=0; $w<=5; $w++) {
 //for ($w=0; $w<=5; $w++) {
 	if (( date('d', strtotime($week_start. " + $cntr days")) < 7 ) && ( $w > 2 )){ // exit if monday is next month, if not, go on and draw another week
 		break;
@@ -140,25 +137,56 @@ for ($w=6; $w<=5; $w++) {
 		$linkoverride=""; // used for overriding link color
 
 		$lnk="calendar.php?t=1&amp;sm=$_GET[sm]&amp;td=" . date('Y-m-d', strtotime($week_start. " + $cntr days")); // NB draw month from that...
-		if ($nd == 21) {
+/*		if ($nd == 21) {
 			$img="background:url('pix/daytaken.png') no-repeat";
 			$titl="Booket av deg";
 		}
-/*		if ($nd == 8) {
+		if ($nd == 8) {
 			$img="background:url('pix/daybusy.png') no-repeat";
 			$titl="Opptatt (navn)";
 		}
 */
 		$selector=date('Y-m-d', strtotime($week_start. " + $cntr days"));
-		if (!empty($booked[$selector])) {
-			if ($booked[$selector] == $_SESSION['fvuser']) { // booked myself
-				$img="background:url('pix/daytaken.png') no-repeat";
+		$bkgrounds = "";
+	       for ($hr = 0; $hr <= 23; $hr++) {
+		if (!empty($booked[$selector][$hr] )) {
+			switch ($hr) {
+				case 0:
+				case 1:
+				case 2:
+				case 3:
+				case 4:
+				case 5:
+				case 6:
+					$hrdispl=0; // first line in day
+					break;
+				case 7:
+				case 8:
+				case 9:
+				case 10:
+				case 11:
+				case 12:
+				case 13:
+				case 14:
+					$hrdispl = $hr - 6; // lines 1..8 in day
+					break;
+				default:
+					$hrdispl=9; // last line in day
+			}
+//			echo "hrdisplay $hrdisplay";
+			$zord=$hr +1;
+//	       	echo "booked $selector hour: " . $booked[$selector][$hr];
+			if ($booked[$selector][$hr] == $_SESSION['fvuser']) { // booked myself
+				$bkgrounds .= "</div><div class=\"calday\" style=\"z-index:$zord;background:url('pix/tak$hrdispl.png') no-repeat;background-size:contain;\">";
 				$titl="Booket av deg";
 			} else { // someone else booked this day
-				$img="background:url('pix/daybusy.png') no-repeat";
+				$bkgrounds .= "</div><div class=\"calday\" style=\"z-index:$zord;background:url('pix/bus$hrdispl.png') no-repeat;background-size:contain;\">";
 				$titl="Booket av en annen (#$booked[$selector]) ";
 			}
 		}
+	       } // for 0..23
+
+//		$bkgrounds .= "<div class=\"calday\" style=\"z-index:1;background:url('pix/tak4.png') no-repeat;background-size:contain;\"></div>\n";
 
 		if (date('m', strtotime($week_start. " + $cntr days")) <> $mth ) { // IF out of month range, create monthflip links
 //			$img="background:lightgray"; // should fetch correct image anyway
@@ -171,17 +199,17 @@ for ($w=6; $w<=5; $w++) {
 		$out .= "
 	<div class=\"cw\">
 		<a href=\"$lnk\" title=\"$titl\" class=\"$linkoverride\">
-		<div class=\"calday $bordoverride\" style=\"$img; background-size:contain;$bordoverride\">
-			$nd
-		</div></a>
-	</div>"; // this scale-background-to-div-respecting-aspect-ratio-trick is thanks to http://stackoverflow.com/questions/8200204/fit-background-image-to-div and http://stackoverflow.com/questions/12121090/responsively-change-div-size-keeping-aspect-ratio together
+		<div class=\"calday $bordoverride\" style=\"z-index:0;background:url('pix/dayblank.png') no-repeat; background-size:contain;$bordoverride\">
+		$bkgrounds $nd</div>
+		</a>
+		</div>"; // this scale-background-to-div-respecting-aspect-ratio-trick is thanks to http://stackoverflow.com/questions/8200204/fit-background-image-to-div and http://stackoverflow.com/questions/12121090/responsively-change-div-size-keeping-aspect-ratio together
 //		if ( $nd == 31 ) { break; } // draw other days, etc
 		$cntr++; // let's count
-	}
+	} // day end
 	$out .= "</div>";
 }
 
-
+/*
 // TESTING TESTING
 $out .= "
 Meeting room busy/taken/available test
@@ -240,7 +268,7 @@ Meeting room busy/taken/available test
 </div>
 ";
 
-
+*/
 
 
 

@@ -54,24 +54,22 @@ $qs="select person.persname,person.ix,person.iswarehouse
 
 
 //$out .="$qs …Personliste her…<p><a href=\"logout.php\">Logg ut</a>";
-$out .="Liste over lagere/personer, klikk for å se verktøy:  |  <a href=\"logout.php\">Logg ut</a><hr>";
+$out .="Liste over lagere/personer  | Eller: <a href=\"logout.php\">Logg ut</a><hr>";
 
 if ($qr = $db->query($qs)) {
 
 $isw = 1;
 while ($prs = $qr->fetch_object()) {
 	if ( $prs->iswarehouse == 1 && $isw == 1) {
-		$out .= "<b>Lagere:</b><p>";
+		$out .= "<b><ul><li>Lagere:</b></li></ul><p>";
 		$isw = 0;
 	}
 	if ( $prs->iswarehouse == 0 && $isw == 0) {
-		$out .= "<b>Personer:</b><p>";
+		$out .= "<b><ul><li>Personer:</b></li></ul><p>";
 		$isw = 1;
 	}
 	$out .= "
-$prs->persname -
-<a href=\"tools.php?p=h&amp;w=$prs->ix\">Vis I Hende</a> -
-<a href=\"tools.php?p=w&amp;w=$prs->ix\">Vis eide verktøy</a>
+<a href=\"tools.php?p=w&amp;w=$prs->ix\">$prs->persname</a>
 <p>";
 }
 
