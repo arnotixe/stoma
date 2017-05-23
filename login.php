@@ -24,39 +24,61 @@ $scripts = "";
 $out="";
 
 
-
+/*
 $out .= "tool scanned was $_SESSION[fvtool] and warehouse was $_SESSION[fvwh]<br>
 <a href=/fv/?t=2343>nonex tool</a>
 <a href=/fv/?t=1>ex tool</a><p>
 ";
+*/
 
 // someone just stumbled across this page, or logged out, or something went wrong
-if ( empty($_SESSION[fvtool]) && empty($_SESSION[fvwh]) ) {
-echo "For å bruke disse sidene må du først scanne en verktøykode med en QR-scanner.";
+if ( empty($_SESSION[fvtool]) && empty($_SESSION[fvwh]) ) { // UGLY HACK
+	echo "<html>
+<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+<title>Fellesverktøy</title>
+<body>
+For å bruke disse sidene må du først scanne en verktøykode med en QR-scanner.";
 return;
 }
 
+//var_dump($_SESSION);
+// Fetch tool information
+$qs = "select * from tool where ix=$_SESSION[fvtool]";
+//echo $qs;
+if ($tq=$db->query($qs)) {
+   $tool = $tq->fetch_object();
+}
 
 // check if tool, warehouse or whatever input actually exist (and is active)
 
+// STEP 1 check if tool exists
+
+// when fvtool is set
+if (!empty($_SESSION["fvtool"])) {
+
+// $out .= "TOOLID = $_SESSION[fvtool] ";
+
 // CHECK if tool exists
-$tl = mysql_escape_string($_SESSION[fvtool]);
-$out .= "TOOLID = $_SESSION[fvtool] ";
-$qs="SELECT division,company.name as cname, division.contactperson as pname, division.phone as pphone, division.mail as pmail
+$tl = mysql_escape_string($_SESSION["fvtool"]);
+
+$qs="SELECT division,company.name as cname, division.divname as divname, division.contactperson as pname, division.phone as pphone, division.mail as pmail
             from tool,person,company,division
 	    where tool.owner=person.ix and person.division=division.ix and division.company=company.ix and
-            tool.ix = $_SESSION[fvtool]";
+            tool.ix = $tl";
+
 // echo $qs;
 if ($pq = $db->query($qs)) {
     if ($tfound = $pq->fetch_object()){
 	// Always show owner info, in case it is lost...
 	$out .= "<div class=\"toolbox\">
-		 Dette verktøyet tilhører <b>$tfound->cname</b>, kontaktperson er
-		 <br><b>$tfound->pname</b><p>
+		 Dette verktøyet ($tool->name) tilhører <b>$tfound->cname $tfound->divname</b>, og vi blir veldig glad om du hjelper oss med å få det tilbake.<p>
+		 Kontaktperson er <b>$tfound->pname</b>.
+		 <div class=\"center\">
                  <a href=\"tel:$tfound->pphone\"><img class=\"tl\" src=\"pix/phone.png\" alt=\"Ring\"></a>
-                 <a href=\"sms:$tfound->pphone?body=Hei, jeg fant et av dine verktøy:(#$_SESSION[fvtool]) Mvh\"><img  class=\"tl\" src=\"pix/sms.png\" alt=\"SMS\"></a>
-                 <a href=\"mailto:$tfound->pmail?subject=Fant et av dine verktøy&amp;body=Hei, jeg fant et av dine verktøy (#$_SESSION[fvtool]):%0D%0A%0D%0AMvh \">
+                 <a href=\"sms:$tfound->pphone?body=Hei, jeg fant et av dine verktøy (#$tool->ix $tool->name) Mvh\"><img  class=\"tl\" src=\"pix/sms.png\" alt=\"SMS\"></a>
+                 <a href=\"mailto:$tfound->pmail?subject=Fant $tool->name&amp;body=Hei, jeg fant et av dine verktøy (#$tool->ix $tool->name)%0D%0A%0D%0AMvh \">
 		 <img class=\"tl\"  src=\"pix/mail.png\" alt=\"Mail\"></a>
+		 </div>
 		</div>";
 
 	$division = $tfound->division; // users trying to log in should belong to the same division as the tool
@@ -70,12 +92,32 @@ if ($pq = $db->query($qs)) {
     }
 }
 
+} // if fvtool !empty
 /*
 TODO check warehouse etc here. Should match tool, etc
 */
 
+
+// when fvwh is set, get division, company info from it
+if (!empty($_SESSION["fvwh"])) {
+	$tl = mysql_escape_string($_SESSION["fvwh"]);
+
+	$qs="SELECT division,company.name as cname, division.ix as division, division.divname as divname, division.contactperson as pname, division.phone as pphone, division.mail as pmail
+            from person,company,division
+	    where person.division=division.ix and division.company=company.ix and
+            person.ix = $tl";
+//echo "fvwh set, finding division with " . $qs . "<p>";
+	if ($pq = $db->query($qs)) {
+		if ($tfound = $pq->fetch_object()){
+			$out .= "<div class=\"toolbox\">Dette lageret tilhører $tfound->cname $tfound->divname</div>";
+			$division = $tfound->division;
+		}
+	}
+
+}
+
 // next box
-$out .= "<div class=\"toolbox\">";
+$out .= "<div class=\"toolbox\" style=\"clear: left;\">";
 
 // If we got here, tool and/or warehouse are ok, and we've got a division
 
@@ -92,7 +134,7 @@ if ( !empty($_POST["password"])) {
       if ( $tfound->pin == $_POST["password"] ) {
 	// good password
         generatelogintoken($db,$usr);
-	$out .= "good password, userid is now set in cookie and session.";
+//	$out .= "good password, userid is now set in cookie and session.";
 	header("Location:index.php");
 	return;
       } else {
@@ -119,12 +161,12 @@ if ( !empty($_GET["u"])) {
 //	echo "Logg inn bruker $_GET[u]";
 } else {
   // draw list of persons attached to that division/company
-  $out .= "... eller logg inn for å behandle:<p>";
+  $out .= "Hvis du arbeider i $tfound->cname $tfound->divname, velg navnet ditt for å logge inn:<p>";
   $qs="SELECT person.ix,person.persname
             from person
 	    where person.division=$division and person.iswarehouse=0 and person.active=1
 	    order by persname";
-  // echo $qs;
+//  echo "Finding persons in division $division with: " .  $qs;
   if ($pq = $db->query($qs)) {
     while ($tfound = $pq->fetch_object()){
 	$out .= "<a href=\"?u=$tfound->ix&amp;n=$tfound->persname\">$tfound->persname</a><p>";

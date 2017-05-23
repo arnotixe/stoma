@@ -43,7 +43,8 @@ $scripts = "";
 $out="";
 
 // get name of warehouse/person queried
-$qr = $db->query("select * from person where ix=" . mysql_escape_string($_GET[w]));
+if ($qr = $db->query("select * from person where ix=" . mysql_escape_string($_GET["w"]))) {
+
 $whouse = $qr->fetch_object();
 
 switch ($_GET["p"]) { //show what for person get[w]?
@@ -168,6 +169,21 @@ switch ($_GET["p"]) { //show what for person get[w]?
 }
 
 
+// add warehouse QR code
+//if () { // check if logged in person is admin
+
+$out .= "
+<div class=\"toolbox\" style=\"clear:left;\">
+<p>Lagerlink:<img src=\"qr.php?c=http://teigseth.no/fv/?w=$_GET[w]\">
+</div>
+
+";
+
+} else {  // if query didn't go well
+	$out .= "Invalid page parameters.";
+}  // if query went well
+
+//} // if we should show warehouse code
 
 // page starts here
 echo "<html>
@@ -248,6 +264,8 @@ tr:nth-child(2) {
 </style>
 <body>";
 echo $out;
+
+
 
 // check if this tool's division is the same as logged-in user's
 //echo "Assign Tool no $_GET[t] to logged-in user $usr";

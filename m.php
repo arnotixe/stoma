@@ -47,10 +47,6 @@ if ( empty($_GET["sm"]) ) {
 	$usedate=strtotime("$_GET[sm]-01");
 }
 
-$nowyr = date('Y');
-$nowmth = date('m');
-
-
 $yr = date('Y', $usedate);
 $mth = date('m', $usedate);
 $fdaymth = strtotime("$yr-$mth-01");
@@ -72,31 +68,10 @@ $week_start = date('Y-m-d', strtotime(date('Y-m-d',$fdaymth). ' - ' . $day . ' d
 	" . date('Y-m-d',$fdaymth) . "first monday of first week that month was $week_start and the next was
 	" . date('Y-m-d', strtotime($week_start. ' + 1 days'));
 */
-
-// for use in next/last month links
-$ny=$yr; // next=default this year
-$ly=$yr; // last=default this year
-
-$lm = $mth - 1; //last month
-if ($lm == 0) {
-	$lm = 12; //last month
-	$ly -= 1; // decrease year as well
-}
-
-$nm = $mth + 1; //next month
-if ($nm == 13) {
-	$lm = 1; //last month
-	$ny += 1;// increase year as well
-}
-
 $out .="
-Bookingkalender for <a href=\"index.php?t=$_GET[t]\">verktøy $_GET[t]</a><p>
-<div class=\"toolbox\">
-<a href=\"calendar.php?t=$_SESSION[fvtool]&amp;sm=$ly-$lm\"> &lt; Forrige måned</a> -
-<a href=\"calendar.php?t=$_SESSION[fvtool]&amp;sm=$nowyr-$nowmth\" title=\"Gå til i dag\">
-$mth/$yr</a> -
-<a href=\"calendar.php?t=$_SESSION[fvtool]&amp;sm=$ny-$nm\">Neste måned &gt;</a>
-</div>
+Bookingkalender for <a href=\"index.php?t=$_SESSION[fvtool]\">verktøy $_GET[t]</a><p>
+&lt; Forrige måned    $mth/$yr    Neste måned &gt;
+<p>
 <div>"; // this div is the calendar container
 
 
@@ -110,7 +85,7 @@ $booked=array();
 if ($qr = $db->query($qs)) {
     while ($bk = $qr->fetch_object()){
 //	$out .= "tool $bk->tool booked by $bk->person on $bk->date<p>";
-	$booked["$bk->date"] = $bk->person; // add to array
+	$booked["$bk->date"][$bk->hour] = $bk->person; // add to array
     }
 /* else {
        logg(NULL,NULL,NULL,$spectool,"No bookings for this tool in $yr-$mth");
@@ -120,7 +95,7 @@ if ($qr = $db->query($qs)) {
 }
 
 
-
+// all this must go into meeting_day.php
 // toggle day, if specified
 if ( !empty($_GET["td"]) ){
 	$selector = mysql_escape_string($_GET["td"]);
@@ -146,11 +121,9 @@ if ( !empty($_GET["td"]) ){
 	}
 }
 
-
-
-
 $cntr=0;
 for ($w=0; $w<=5; $w++) {
+//for ($w=0; $w<=5; $w++) {
 	if (( date('d', strtotime($week_start. " + $cntr days")) < 7 ) && ( $w > 2 )){ // exit if monday is next month, if not, go on and draw another week
 		break;
 	}
@@ -174,15 +147,46 @@ for ($w=0; $w<=5; $w++) {
 		}
 */
 		$selector=date('Y-m-d', strtotime($week_start. " + $cntr days"));
-		if (!empty($booked[$selector])) {
-			if ($booked[$selector] == $_SESSION['fvuser']) { // booked myself
-				$img="background:url('pix/daytaken.png') no-repeat";
+		$bkgrounds = "";
+	       for ($hr = 0; $hr <= 23; $hr++) {
+		if (!empty($booked[$selector][$hr] )) {
+			switch ($hr) {
+				case 0:
+				case 1:
+				case 2:
+				case 3:
+				case 4:
+				case 5:
+				case 6:
+					$hrdispl=0; // first line in day
+					break;
+				case 7:
+				case 8:
+				case 9:
+				case 10:
+				case 11:
+				case 12:
+				case 13:
+				case 14:
+					$hrdispl = $hr - 6; // lines 1..8 in day
+					break;
+				default:
+					$hrdispl=9; // last line in day
+			}
+//			echo "hrdisplay $hrdisplay";
+			$zord=$hr +1;
+//	       	echo "booked $selector hour: " . $booked[$selector][$hr];
+			if ($booked[$selector][$hr] == $_SESSION['fvuser']) { // booked myself
+				$bkgrounds .= "</div><div class=\"calday\" style=\"z-index:$zord;background:url('pix/tak$hrdispl.png') no-repeat;background-size:contain;\">";
 				$titl="Booket av deg";
 			} else { // someone else booked this day
-				$img="background:url('pix/daybusy.png') no-repeat";
+				$bkgrounds .= "</div><div class=\"calday\" style=\"z-index:$zord;background:url('pix/bus$hrdispl.png') no-repeat;background-size:contain;\">";
 				$titl="Booket av en annen (#$booked[$selector]) ";
 			}
 		}
+	       } // for 0..23
+
+//		$bkgrounds .= "<div class=\"calday\" style=\"z-index:1;background:url('pix/tak4.png') no-repeat;background-size:contain;\"></div>\n";
 
 		if (date('m', strtotime($week_start. " + $cntr days")) <> $mth ) { // IF out of month range, create monthflip links
 //			$img="background:lightgray"; // should fetch correct image anyway
@@ -195,77 +199,52 @@ for ($w=0; $w<=5; $w++) {
 		$out .= "
 	<div class=\"cw\">
 		<a href=\"$lnk\" title=\"$titl\" class=\"$linkoverride\">
-		<div class=\"calday $bordoverride\" style=\"$img; background-size:contain;$bordoverride\">
-			$nd
-		</div></a>
-	</div>"; // this scale-background-to-div-respecting-aspect-ratio-trick is thanks to http://stackoverflow.com/questions/8200204/fit-background-image-to-div and http://stackoverflow.com/questions/12121090/responsively-change-div-size-keeping-aspect-ratio together
+		<div class=\"calday $bordoverride\" style=\"z-index:0;background:url('pix/dayblank.png') no-repeat; background-size:contain;$bordoverride\">
+		$bkgrounds $nd</div>
+		</a>
+		</div>"; // this scale-background-to-div-respecting-aspect-ratio-trick is thanks to http://stackoverflow.com/questions/8200204/fit-background-image-to-div and http://stackoverflow.com/questions/12121090/responsively-change-div-size-keeping-aspect-ratio together
 //		if ( $nd == 31 ) { break; } // draw other days, etc
 		$cntr++; // let's count
-	}
-	$out .= "</div>"; // end of week
+	} // day end
+	$out .= "</div>";
 }
-	$out .= "<div class=\"toolbox\">
-	         Fremtidige bookinger (måneder) her…
-	         </div>";
 
 /*
 // TESTING TESTING
 $out .= "
-
+Meeting room busy/taken/available test
 <div style=\"clear:left;\">
-	<div class=\"cw\">
-		<div class=\"calday\" style=\"background:url('pix/dayblank.png') no-repeat;background-size:contain;\">
+
+<a href=\"m.php?td=today\" title=\"Layered busy/taken\"><div class=\"cw\">
+		<div class=\"calday\" style=\"z-index:0;background:url('pix/dayblank.png') no-repeat;background-size:contain;\">
 			1
 		</div>
-	</div>
-	<div class=\"cw\">
-		<div class=\"calday\" style=\"background:url('pix/daytaken.png') no-repeat;background-size:contain;\">
-			2
-		</div>
-	</div>
-	<div class=\"cw\">
-		<div class=\"calday\" style=\"background:url('pix/daybusy.png') no-repeat;background-size:contain;\">
-			3
-		</div>
-	</div>
-	<div class=\"cw\">
-		<div class=\"calday\" style=\"background:url('pix/dayblank.png') no-repeat;background-size:contain;\">
-			4
-		</div>
-	</div>
-	<div class=\"cw\">
-		<div class=\"calday\" style=\"background:url('pix/dayblank.png') no-repeat;background-size:contain;\">
-			5
-		</div>
-	</div>
-	<div class=\"cw\">
-		<div class=\"calday\" style=\"background:url('pix/dayblank.png') no-repeat;background-size:contain;\">
-			6
-		</div>
-	</div>
-	<div class=\"cw\">
-		<div class=\"calday\" style=\"background:url('pix/dayblank.png') no-repeat;background-size:contain;\">
-			7
-		</div>
-	</div>
-</div>
+		<div class=\"calday\" style=\"z-index:1;background:url('pix/tak4.png') no-repeat;background-size:contain;\"></div>
+		<div class=\"calday\" style=\"z-index:2;background:url('pix/bus5.png') no-repeat;background-size:contain;\"></div>
+		<div class=\"calday\" style=\"z-index:3;background:url('pix/tak0.png') no-repeat;background-size:contain;\"></div>
+		<div class=\"calday\" style=\"z-index:4;background:url('pix/bus6.png') no-repeat;background-size:contain;\"></div>
+	</div></a>
 
-<div style=\"clear:left;\">
-	<div class=\"cw\">
-		<div class=\"calday\" style=\"background:url('pix/dayblank.png') no-repeat;background-size:contain;\">
-			1
-		</div>
-	</div>
-	<div class=\"cw\">
-		<div class=\"calday\" style=\"background:url('pix/daytaken.png') no-repeat;background-size:contain;\">
+<a href=\"m.php?td=today\" title=\"Layered busy/taken\"><div class=\"cw\">
+		<div class=\"calday\" style=\"z-index:0;background:url('pix/dayblank.png') no-repeat;background-size:contain;\">
 			2
 		</div>
-	</div>
+		<div class=\"calday\" style=\"z-index:1;background:url('pix/tak1.png') no-repeat;background-size:contain;\"></div>
+		<div class=\"calday\" style=\"z-index:1;background:url('pix/tak2.png') no-repeat;background-size:contain;\"></div>
+		<div class=\"calday\" style=\"z-index:1;background:url('pix/tak3.png') no-repeat;background-size:contain;\"></div>
+	</div></a>
+
+<a href=\"m.php?td=today\" title=\"Layered busy/taken\">
 	<div class=\"cw\">
-		<div class=\"calday\" style=\"background:url('pix/daybusy.png') no-repeat;background-size:contain;\">
+		<div class=\"calday\" style=\"z-index:0;background:url('pix/dayblank.png') no-repeat;background-size:contain;\">
 			3
 		</div>
+		<div class=\"calday\" style=\"z-index:1;background:url('pix/bus1.png') no-repeat;background-size:contain;\"></div>
+		<div class=\"calday\" style=\"z-index:1;background:url('pix/bus2.png') no-repeat;background-size:contain;\"></div>
+		<div class=\"calday\" style=\"z-index:1;background:url('pix/tak5.png') no-repeat;background-size:contain;\"></div>
+		<div class=\"calday\" style=\"z-index:1;background:url('pix/tak9.png') no-repeat;background-size:contain;\"></div>
 	</div>
+</a>
 	<div class=\"cw\">
 		<div class=\"calday\" style=\"background:url('pix/dayblank.png') no-repeat;background-size:contain;\">
 			4
@@ -289,8 +268,6 @@ $out .= "
 </div>
 ";
 
-
-
 */
 
 
@@ -310,10 +287,11 @@ $metarefresh
 	width: 12%;
 	display: inline-block;
 	position: relative;
+	font-size:4vw; // http://stackoverflow.com/questions/16056591/font-scaling-based-on-width-of-container
 }
 .gray {
-	border-color: lightgray !important;
-	color:lightgray !important;
+	border-color: gray !important;
+	color:gray !important;
 }
 .cw:after {
 	padding-top:89%;

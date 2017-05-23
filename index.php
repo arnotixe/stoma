@@ -5,6 +5,30 @@ require("config.php");
 
 header('Content-Type: text/html; charset=utf-8');
 
+// Currently, iPhone opens URL without asking.
+// Android users can use https://play.google.com/store/apps/details?id=me.scan.android.client and configure to open URL without asking :)
+
+
+
+/*
+Avoiding Confusion With Alphanumeric Characters
+
+https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3541865/
+https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3541865/table/t1-ptj3712663/
+
+Therefore if we need to read tags:
+
+7, l, 1, i, I -> I
+d, D, o, O, 0 -> O
+c, C, e, E, f, F -> E
+t, T, y, Y, 2, z, Z -> Z
+g, G, q, Q -> Q
+b, B, 8 -> B
+m, M, n, N -> N
+3, s, S, 5 -> S
+
+*/
+
 //Session-based login and remember-me by cookie is called in config.php and functions.php; just check if logged in or not
 /*
 
@@ -33,6 +57,8 @@ if (empty($_SESSION['fvuser']) && !empty($_COOKIE['remembertools'])) {
 }
 */
 
+
+
 // these variables are sessioned to pass them on to login and other pages
 if (!empty($_GET["t"])) {
    $_SESSION['fvtool'] = $_GET["t"]; // tool code scanned? Update only if specified
@@ -41,20 +67,35 @@ if (!empty($_GET["t"])) {
    unset($_SESSION['fvwh']);
 }
 
-if (!empty($_GET["w"])) {
-   $_SESSION['fvwh'] = $_GET["w"];   // warehouse code scanned?
-//echo "user was just returining tool $_SESSION[fvtool] _$_SESSION[fvpush]_ $_GET[w]. Let's hope that's a warehouse in the correct company.";
+if (empty($_SESSION['fvtool']) && !empty($_SESSION['fvwh'])) { // no tool, set warehouse GET in case we return from login with no tool here... MESSY CODE sorry should have a returnlink "user came to see this"
+	$_GET["w"] = $_SESSION['fvwh'];
+}
 
-   if (!empty($_SESSION["fvpush"])) { // tool push is flaged.
-     $_GET["a"] = "pt"; // trick this page into using warehouse as push-to $_GET[w]
-     $_GET["pt"] = $_GET["w"]; // trick this page into using warehouse as push-to $_GET[w]
-   } else { // should probably show warehouse (tools->all on warehouse) page, since no tool push is flagged.
-   	header("Location:tools.php?w=$_GET[w]");
-   	return;
-   }
+
+if (!empty($_GET["w"])) {
+   $_SESSION["fvwh"] = $_GET["w"];   // warehouse code scanned? reg it into SESSION
+//echo "GET W is " . $_GET["w"] . " and session fvwh " . $_SESSION["fvwh"];
+//var_dump($_SESSION);
+//return;
+//echo "user was just returining tool $_SESSION[fvtool] _$_SESSION[fvpush]_ $_GET[w]. Let's hope that's a warehouse in the correct company.";
 // should reset  $_SESSION["fvpush"] = "towarehouse"; afterwards.
 
+   if (!empty($_SESSION["fvpush"])) { // tool push is flagged.
+	     $_GET["a"] = "pt"; // trick this page into using warehouse as push-to $_GET[w]
+	     $_GET["pt"] = $_GET["w"]; // trick this page into using warehouse as push-to $_GET[w]
+
+        } else { // tool push is not flagged
+	        // GET w, no push? show warehouse (tools->all on warehouse) page, since no tool push is flagged.
+		unset($_SESSION['fvtool']); // remove fvtool
+	   	header("Location:tools.php?w=$_SESSION[fvwh]");
+	   	return;
+   }
 }
+
+
+// DEBUG
+// var_dump($_SESSION);
+
 
 if (empty($_SESSION['fvuser'])) {
 //echo "You must login.";
@@ -141,7 +182,7 @@ $phone = $person->phone;
 $mail = $person->mail;
 
 // Who owns this tool?
-if ($pq = $db->query("SELECT persname,person.ix from person,tool where person.ix=tool.owner and tool.ix=$spectool limit 1")) {
+if ($pq = $db->query("SELECT persname,person.ix,iswarehouse from person,tool where person.ix=tool.owner and tool.ix=$spectool limit 1")) {
     if ($owner = $pq->fetch_object()){
     } else {
        logg(NULL,NULL,NULL,$spectool,"Tool has no owner");
@@ -159,7 +200,7 @@ if ($result = $db->query("SELECT * from tool where ix=$spectool limit 1")) {
 	$out .= "
 		<div class=\"contain\">
 		<div class=\"toolbox\">
-		 Verktøyet: <b>$row->name</b> (#$spectool)<br>hører hjemme hos $owner->persname; nå er det hos:
+		 Verktøyet: <b>$row->name</b> (#$spectool) hører hjemme hos $owner->persname; nå er det hos:
 		<div class=\"holder\">
 		 $person->persname<br>
 		 <a href=\"tel:$phone\"><img class=\"tl\" src=\"pix/phone.png\" alt=\"Ring\"></a>
@@ -191,6 +232,7 @@ if ($result = $db->query("SELECT * from tool where ix=$spectool limit 1")) {
 	       if ($upq = $db->query("update tool set person=$reassign->ix where ix=$spectool")) {
 	         $out .= "<div class=\"actionmsg\">";
 	         $out .= "OK verktøyet ble registrert på deg.";
+		 $sndout = "<audio src=\"pix/success.wav\" autoplay=\"autoplay\" ></audio>";
 	         $out .= "</div>";
 	         logg(NULL,NULL,NULL,$spectool,"$reassign->persname har det");
    	       } else {
@@ -200,7 +242,16 @@ if ($result = $db->query("SELECT * from tool where ix=$spectool limit 1")) {
   	  }
 
          // IF updating: return
-	 if ($_GET["a"] == "r" ) { // rutern tool
+	 if ($_GET["a"] == "r" ) { // return tool
+	     // check if returning to a warehouse. if so, set fvpush
+	     if ($owner->iswarehouse == 1 ){ // trying to return to a warehouse owner
+		     $_SESSION["fvpush"] = "towarehouse";
+		     header("Location:index.php?t=$spectool&a=pt&pt=$owner->ix");
+		     return;
+	     }
+
+
+
 	     $out .= "$pickbuttons";
 	     $metarefresh = "<meta http-equiv=\"refresh\" content=\"5; url=index.php?t=$spectool\">";
 	     if ($owner->ix == $person->ix ) { // already have it?
@@ -211,6 +262,7 @@ if ($result = $db->query("SELECT * from tool where ix=$spectool limit 1")) {
   	       if ($upq = $db->query("update tool set person=$owner->ix where ix=$spectool")) {
 	         $out .= "<div class=\"actionmsg\">";
 	         $out .= "OK verktøyet ble lagt på plass. BRA!";
+		 $sndout = "<audio src=\"pix/success.wav\" autoplay=\"autoplay\" ></audio>";
 	         $out .= "</div>";
    	         logg(NULL,NULL,NULL,$spectool,"$reassign->persname la verktøyet på plass");
    	       } else {
@@ -254,6 +306,7 @@ if ($result = $db->query("SELECT * from tool where ix=$spectool limit 1")) {
 		       if ($upq = $db->query("update tool set person=$pt where ix=$spectool")) {
 		         $out .= "<div class=\"actionmsg\">";
 		         $out .= "OK verktøyet ble registrert på $ptn->persname.";
+			 $sndout = "<audio src=\"pix/success.wav\" autoplay=\"autoplay\" ></audio>";
 		         $out .= "</div>";
 	                 $metarefresh = "<meta http-equiv=\"refresh\" content=\"5; url=index.php?t=$spectool\">";
 		         logg(NULL,NULL,NULL,$spectool,"$ptn->persname har det");
@@ -265,7 +318,7 @@ if ($result = $db->query("SELECT * from tool where ix=$spectool limit 1")) {
 			unset($_SESSION["fvpush"]);
 		} else { // this is a warehouse
 		         $out .= "<div class=\"actionmsg\">";
-			 $out .= "NESTEN I MÅL!<p>Du må nå scanne koden på verktøylageret for å få det registrert dit :)";
+			 $out .= "NESTEN I MÅL!<p>Du må nå scanne koden på <b>$ptn->persname</b> for å få det registrert dit :)";
 		         $out .= "</div>";
 		} // if warehouse
 	      } else {// if tool owner is in same division as intended push-to user
@@ -308,7 +361,7 @@ if ($result = $db->query("SELECT * from tool where ix=$spectool limit 1")) {
 	   $out .= "
 </div>
 </div>
-<div class=\"toolbox\">
+<div class=\"toolbox\" style=\"clear:left;\">
 <i><a href=\"history.php?t=$spectool\">Historikk:</a></i><br>";
   	  // show recent tool history
 	    $qs= "select * from log where tool=$spectool order by date desc limit 10";
@@ -328,12 +381,12 @@ if ($result = $db->query("SELECT * from tool where ix=$spectool limit 1")) {
 $out .= "
 </div>
 <div>
-<div class=\"toolbox center\">
-<a href=\"calendar.php?t=$spectool\"><img  class=\"tl\" src=pix/cal.png alt=\"Bookingkalender\" title=\"Bookingkalender\"></a>
+<div class=\"toolbox center\" style=\"clear:left;\">
+<a href=\"c.php?t=$spectool\"><img  class=\"tl\" src=pix/cal.png alt=\"Bookingkalender\" title=\"Bookingkalender\"></a>
 <a href=\"tools.php?p=w&amp;w=$owner->ix\"><img  class=\"tl\" src=pix/tools.png alt=\"Verktøyliste\" title=\"Verktøy her\"></a>
 <a href=\"persons.php\"><img  class=\"tl\" src=pix/persons.png alt=\"Personliste\" title=\"Personliste\"></a><br>
 </div>
-<div class=\"toolbox\">
+<div class=\"toolbox\" style=\"clear:left;\">
 <a href=\"uploads/$_SESSION[fvtool].jpg\"><img src=\"uploads/$_SESSION[fvtool]_thumb.jpg\" alt=\"(har ikke bilde)\"></a><br>
 Serienr: $row->serialno<br>
 Neste kalibrering: $row->nextcalibration<br>
@@ -422,10 +475,20 @@ body {
 <body>";
 echo $out;
 
+// $sndout could be put in up there, but will probably be annoying :)
+
+
 // check if this tool's division is the same as logged-in user's
 //echo "Assign Tool no $_GET[t] to logged-in user $usr";
 
 // no qr code parameter: Display tools list
 
+echo "
+<div class=\"toolbox\" style=\"clear:left;\">
+<p>Verktøylink:<img src=\"qr.php?c=http://teigseth.no/fv/?t=$_SESSION[fvtool]\">
+<p>Bookinglink:<img src=\"qr.php?c=http://teigseth.no/fv/c.php?t=$_SESSION[fvtool]\">
+</div>
+
+";
 
 ?>
