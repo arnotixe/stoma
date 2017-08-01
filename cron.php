@@ -31,7 +31,7 @@ if ($_GET["p"] == $cronpasswd) {
 		2 Bookings active for tomorrow but tool is not returned, send warning emails to both booker and current holder<p>
 		";
 
-$out .="<p>STEP1<p>";
+$out .="<p>STEP1: Check tool calibration status<p>";
         // CRON STEP 1
 	// check calibration dates
         $qs = "select *,datediff(nextcalibration, date(convert_tz(now(),@@session.time_zone,'CET'))) as dtc
@@ -59,7 +59,7 @@ $out .="<p>STEP1<p>";
                 // build 1 mail per each owner and 1 per division manager and send them
         }
 
-$out .="<p>STEP2<p>";
+$out .="<p>STEP2: Trouble with any bookings tomorrow?<p>";
         // CRON STEP 2
 	// check bookings for tomorrow and see if the tools have been returned. If not, notify both owner and booker
 	$qs = "select tool.name,owner.persname as owner,booker.persname as booker,holder.persname as holder,booking.date

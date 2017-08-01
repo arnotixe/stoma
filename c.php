@@ -89,20 +89,35 @@ if ($nm == 13) {
 	$ny += 1;// increase year as well
 }
 
+// fetch tool info
+$qs = "select * from tool where ix=" . mysql_escape_string($_GET["t"]);
+if ($tqr = $db->query($qs)) {
+	$tool=$tqr->fetch_object();
+}
+
+//var_dump($tool);
+if ($tool->bookhours == "1") { // redirect to meeting room booking if bookhours is set...
+   header("Location: m.php?t=$tool->ix");
+   return;
+}
+
+
 $out .="
-Bookingkalender for <a href=\"index.php?t=$_GET[t]\">verktøy $_GET[t]</a><p>
+Bookingkalender for <a href=\"index.php?t=$tool->ix\">$tool->name</a><p>
 <div class=\"toolbox\">
-<a href=\"c.php?t=$_SESSION[fvtool]&amp;sm=$ly-$lm\"> &lt; Forrige måned</a> -
+<a href=\"c.php?t=$_SESSION[fvtool]&amp;sm=$ly-$lm\"> &lt; Forrige</a> -
 <a href=\"c.php?t=$_SESSION[fvtool]&amp;sm=$nowyr-$nowmth\" title=\"Gå til i dag\">
 $mth/$yr</a> -
-<a href=\"c.php?t=$_SESSION[fvtool]&amp;sm=$ny-$nm\">Neste måned &gt;</a>
+<a href=\"c.php?t=$_SESSION[fvtool]&amp;sm=$ny-$nm\">Neste &gt;</a>
 </div>
 <div>"; // this div is the calendar container
 
 
 // fetch bookings and put into array
 // select * from booking where date like "$sm%"
-$qs = "select * from booking where date like \"$yr-$mth%\" and tool=$_SESSION[fvtool]";
+$qs = "select booking.person,booking.date,person.persname
+       from booking,person
+       where date like \"$yr-$mth%\" and tool=$_SESSION[fvtool] and booking.person=person.ix";
 //echo $qs;
 
 $booked=array();
@@ -110,7 +125,9 @@ $booked=array();
 if ($qr = $db->query($qs)) {
     while ($bk = $qr->fetch_object()){
 //	$out .= "tool $bk->tool booked by $bk->person on $bk->date<p>";
-	$booked["$bk->date"] = $bk->person; // add to array
+	$booked["$bk->date"]["id"] = $bk->person; // add to array
+	$booked["$bk->date"]["person"] = $bk->persname; // add to array
+//	$booked["$bk->date"]["person"] = "Navn"; // add to array
     }
 /* else {
        logg(NULL,NULL,NULL,$spectool,"No bookings for this tool in $yr-$mth");
@@ -125,20 +142,20 @@ if ($qr = $db->query($qs)) {
 if ( !empty($_GET["td"]) ){
 	$selector = mysql_escape_string($_GET["td"]);
 
-	if ( !empty($booked[$selector])) { // entry exists, delete it
+	if ( !empty($booked[$selector]["id"])) { // entry exists, delete it
 //FIXME should check if is_owner
-		if ($booked[$selector] == $_SESSION['fvuser']) {
-			unset($booked[$selector]);
+		if ($booked[$selector]["id"] == $_SESSION['fvuser']) {
+			unset($booked[$selector]["id"]);
 			// delete from database as well
-			$qs = "delete from booking where tool=$_SESSION[fvtool] and date=\"$selector\"";
+			$qs = "delete from booking where tool=$_SESSION[fvtool] and date=\"$selector\" "; // don't touch by-hour-bookings
 			header("Location:c.php?t=$_SESSION[fvtool]&sm=$_GET[sm]"); // redirect to avoid refresh toggle loop
 		} else { // you are not the owner of this booking
-			$out .= "<b>OOPS! Det er ikke du som har booket den dagen (men #$booked[$selector]), så du kan ikke avbooke... Kontakt (kontaktinfo her)</b><p>";
+			$out .= "<b>OOPS! Det er ikke du som har booket den dagen. Kontakt <a href=\"tools.php?p=w&amp;w=". $booked[$selector]["id"]. "\">". $booked[$selector]["person"] . "</a> for nærmere avtale.</b><p>";
 		}
 //	echo "DEL $qs DEL";
 		$qr = $db->query($qs);
 	} else {
-		$booked[$selector] = $_SESSION['fvuser']; // book it
+		$booked[$selector]["id"] = $_SESSION['fvuser']; // book it
 		// write to database as well
 		$qs = "insert into booking (person, tool, date) values ($_SESSION[fvuser],$_SESSION[fvtool],\"$selector\")";
 		$qr = $db->query($qs);
@@ -163,7 +180,8 @@ for ($w=0; $w<=5; $w++) {
 		$bordoverride=""; // used for overriding border color
 		$linkoverride=""; // used for overriding link color
 
-		$lnk="c.php?t=1&amp;sm=$_GET[sm]&amp;td=" . date('Y-m-d', strtotime($week_start. " + $cntr days")); // NB draw month from that...
+		$lnkdate =strtotime($week_start. " + $cntr days");
+		$lnk="c.php?t=$_SESSION[fvtool]&amp;sm=$_GET[sm]&amp;td=" . date('Y-m-d', $lnkdate); // NB draw month from that...
 /*		if ($nd == 21) {
 			$img="background:url('pix/daytaken.png') no-repeat";
 			$titl="Booket av deg";
@@ -173,16 +191,23 @@ for ($w=0; $w<=5; $w++) {
 			$titl="Opptatt (navn)";
 		}
 */
+
+		if ($lnkdate < time()) {
+			$lnk="#";
+			$titl="Kan ikke booke i fortiden";
+		}
+
 		$selector=date('Y-m-d', strtotime($week_start. " + $cntr days"));
-		if (!empty($booked[$selector])) {
-			if ($booked[$selector] == $_SESSION['fvuser']) { // booked myself
+		if (!empty($booked[$selector]["id"])) {
+			if ($booked[$selector]["id"] == $_SESSION['fvuser']) { // booked myself
 				$img="background:url('pix/daytaken.png') no-repeat";
 				$titl="Booket av deg";
 			} else { // someone else booked this day
 				$img="background:url('pix/daybusy.png') no-repeat";
-				$titl="Booket av en annen (#$booked[$selector]) ";
+				$titl="Booket av " .$booked[$selector]["person"];
 			}
 		}
+
 
 		if (date('m', strtotime($week_start. " + $cntr days")) <> $mth ) { // IF out of month range, create monthflip links
 //			$img="background:lightgray"; // should fetch correct image anyway
@@ -192,13 +217,14 @@ for ($w=0; $w<=5; $w++) {
 			$lnk = "c.php?t=1&amp;sm=" . date('Y-m', strtotime($week_start. " + $cntr days"));
 		}
 
+
 		$out .= "
 	<div class=\"cw\">
-		<a href=\"$lnk\" title=\"$titl\" class=\"$linkoverride\">
-		<div class=\"calday $bordoverride\" style=\"$img; background-size:contain;$bordoverride\">
+<a href=\"$lnk\" title=\"$titl\" class=\"$linkoverride\">
+   <div class=\"calday $bordoverride\" style=\"$img; background-size:contain;$bordoverride\">
 			$nd
-		</div></a>
-	</div>"; // this scale-background-to-div-respecting-aspect-ratio-trick is thanks to http://stackoverflow.com/questions/8200204/fit-background-image-to-div and http://stackoverflow.com/questions/12121090/responsively-change-div-size-keeping-aspect-ratio together
+		</div>
+	</a></div>"; // this scale-background-to-div-respecting-aspect-ratio-trick is thanks to http://stackoverflow.com/questions/8200204/fit-background-image-to-div and http://stackoverflow.com/questions/12121090/responsively-change-div-size-keeping-aspect-ratio together
 //		if ( $nd == 31 ) { break; } // draw other days, etc
 		$cntr++; // let's count
 	}

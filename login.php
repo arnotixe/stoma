@@ -33,12 +33,18 @@ $out .= "tool scanned was $_SESSION[fvtool] and warehouse was $_SESSION[fvwh]<br
 
 // someone just stumbled across this page, or logged out, or something went wrong
 if ( empty($_SESSION[fvtool]) && empty($_SESSION[fvwh]) ) { // UGLY HACK
+
+// Dirty and confusing hack: Just redirect to tool #1...
+ header('Location:index.php?t=1');
+return;
+
+/*
 	echo "<html>
 <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
 <title>Fellesverktøy</title>
 <body>
 For å bruke disse sidene må du først scanne en verktøykode med en QR-scanner.";
-return;
+return;*/
 }
 
 //var_dump($_SESSION);

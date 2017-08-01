@@ -39,6 +39,7 @@ require_once('random_compat/lib/random.php');
        // does the cookie token match the one stored in db?
        // Note, deactivated users' tokens should be purged from auth_tokens
        if (hash_equals($row->token, hash('sha256', base64_decode($authenticator)))) {
+
           $_SESSION['fvuser'] = $row->userid;
           // Then regenerate login token as above
 	  generatelogintoken($db, $_SESSION['fvuser']);

@@ -25,5 +25,13 @@
 //    QRcode::png($codeText, "uploads/qr_$_GET[c].png", QR_ECLEVEL_H); //http://phpqrcode.sourceforge.net/examples/index.php?example=006
 // hmm that needs saving to file... unconvenient
 
+ if ($_GET["d"] == "1") {
+        header("Content-Type: application/octet-stream");    //
+        // tell the thing the filesize
+//        header("Content-Length: " . filesize($download_path.$file));    
+        // set it as an attachment and give a file name
+        header('Content-Disposition: attachment; filename=qrkode.png');
+ }
+
     QRcode::png($codeText); //http://phpqrcode.sourceforge.net/examples/index.php?example=006
 ?>

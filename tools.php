@@ -43,9 +43,25 @@ $scripts = "";
 $out="";
 
 // get name of warehouse/person queried
+
+// nb if warehouse, check other fields (?) FIXME
 if ($qr = $db->query("select * from person where ix=" . mysql_escape_string($_GET["w"]))) {
 
 $whouse = $qr->fetch_object();
+
+echo "
+<div class=\"toolbox\">
+Kontaktinfo for $whouse->persname (<a href=\"persons.php\">vis alle</a>)
+                <div class=\"holder\">
+                 <a href=\"tel:$whouse->phone\"><img class=\"tl\" src=\"pix/phone.png\" alt=\"Ring\"></a>
+                 <a href=\"sms:$whouse->phone?body=Hei, det er meg. Mvh \"><img  class=\"tl\" src=\"pix/sms.png\" alt=\"SMS\"></a>
+                 <a href=\"mailto:$whouse->mail?subject=Hei&amp;body=Hei, det er meg\"><img class=\"tl\"  src=\"pix/mail.png\" alt=\"Mail\"></a><p>
+                </div>
+</div>
+<div class=\"toolbox\">
+
+";
+
 
 switch ($_GET["p"]) { //show what for person get[w]?
 	case "w": // show all belonging to warehouse/person
@@ -167,6 +183,7 @@ switch ($_GET["p"]) { //show what for person get[w]?
 	default:// show is empty, show all in company/division
 		$out .= " show all";
 }
+$out .= "</div>";
 
 
 // add warehouse QR code
@@ -257,6 +274,7 @@ tr:nth-child(2) {
 	padding: 8px;
 	margin: 1px;
 	float: left;
+	clear: left;
 }
 .contain {
 	display: inline-block;

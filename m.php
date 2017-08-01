@@ -1,6 +1,9 @@
 <?php
 
 // STOMA
+//
+// Meeting room booked page
+
 require("config.php");
 
 header('Content-Type: text/html; charset=utf-8');
@@ -69,7 +72,7 @@ $week_start = date('Y-m-d', strtotime(date('Y-m-d',$fdaymth). ' - ' . $day . ' d
 	" . date('Y-m-d', strtotime($week_start. ' + 1 days'));
 */
 $out .="
-Bookingkalender for <a href=\"index.php?t=$_SESSION[fvtool]\">verktøy $_GET[t]</a><p>
+Møterom <a href=\"index.php?t=$_SESSION[fvtool]\">$_GET[t]</a><p>
 &lt; Forrige måned    $mth/$yr    Neste måned &gt;
 <p>
 <div>"; // this div is the calendar container
@@ -95,9 +98,12 @@ if ($qr = $db->query($qs)) {
 }
 
 
-// all this must go into meeting_day.php
-// toggle day, if specified
+// change what day?
 if ( !empty($_GET["td"]) ){
+	header("Location:md.php?t=$_SESSION[fvtool]&sm=$_GET[sm]&td=$_GET[td]"); // send to day view
+	return;
+
+// something like the remainder to md.php (meeting_day.php)
 	$selector = mysql_escape_string($_GET["td"]);
 
 	if ( !empty($booked[$selector])) { // entry exists, delete it
@@ -106,7 +112,8 @@ if ( !empty($_GET["td"]) ){
 			unset($booked[$selector]);
 			// delete from database as well
 			$qs = "delete from booking where tool=$_SESSION[fvtool] and date=\"$selector\"";
-			header("Location:calendar.php?t=$_SESSION[fvtool]&sm=$_GET[sm]"); // redirect to avoid refresh toggle loop
+			header("Location:md.php?t=$_SESSION[fvtool]&sm=$_GET[sm]"); // redirect to avoid refresh toggle loop
+			return;
 		} else { // you are not the owner of this booking
 			$out .= "<b>OOPS! Det er ikke du som har booket den dagen (men #$booked[$selector]), så du kan ikke avbooke... Kontakt (kontaktinfo her)</b><p>";
 		}
@@ -117,9 +124,15 @@ if ( !empty($_GET["td"]) ){
 		// write to database as well
 		$qs = "insert into booking (person, tool, date) values ($_SESSION[fvuser],$_SESSION[fvtool],\"$selector\")";
 		$qr = $db->query($qs);
-		header("Location:calendar.php?t=$_SESSION[fvtool]&sm=$_GET[sm]"); // redirect to avoid refresh toggle loop
+		header("Location:md.php?t=$_SESSION[fvtool]&sm=$_GET[sm]"); // redirect to avoid refresh toggle loop
+		return;
 	}
 }
+
+
+
+
+// Here draw month, with occupancy bars each day:
 
 $cntr=0;
 for ($w=0; $w<=5; $w++) {
@@ -136,7 +149,7 @@ for ($w=0; $w<=5; $w++) {
 		$bordoverride=""; // used for overriding border color
 		$linkoverride=""; // used for overriding link color
 
-		$lnk="calendar.php?t=1&amp;sm=$_GET[sm]&amp;td=" . date('Y-m-d', strtotime($week_start. " + $cntr days")); // NB draw month from that...
+		$lnk="m.php?t=1&amp;sm=$_GET[sm]&amp;td=" . date('Y-m-d', strtotime($week_start. " + $cntr days")); // NB draw month from that...
 /*		if ($nd == 21) {
 			$img="background:url('pix/daytaken.png') no-repeat";
 			$titl="Booket av deg";
@@ -193,7 +206,7 @@ for ($w=0; $w<=5; $w++) {
 			$bordoverride="gray"; // USE CSS!
 			$linkoverride="gray"; // USE CSS!
 			$titl="Bla";
-			$lnk = "calendar.php?t=1&amp;sm=" . date('Y-m', strtotime($week_start. " + $cntr days"));
+			$lnk = "m.php?t=1&amp;sm=" . date('Y-m', strtotime($week_start. " + $cntr days"));
 		}
 
 		$out .= "
@@ -397,10 +410,15 @@ tr:nth-child(2) {
 <body>";
 echo $out;
 
+
+
 // check if this tool's division is the same as logged-in user's
 //echo "Assign Tool no $_GET[t] to logged-in user $usr";
 
 // no qr code parameter: Display tools list
 
+echo "<div class=\"toolbox\" style=\"clear:left;\">
+<p>Bookingkalender-link:<img src=\"qr.php?c=http://teigseth.no/fv/m.php?t=$_SESSION[fvtool]\">
+</div>";
 
 ?>
