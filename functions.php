@@ -114,6 +114,7 @@ function generatelogintoken($database, $usrid) {
          false, // true for TLS-only
          true  // http-only
     );
+// in logout:  setcookie('remembertools', '',  time() -3600, $sitebase, $siteurl, false, true);
 
 // UGLY hack should use parameterization
     $qs = "INSERT INTO auth_tokens
