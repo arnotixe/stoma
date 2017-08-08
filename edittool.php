@@ -184,7 +184,7 @@ $thbref .= time();
 
 // DRAW FORM
 $out .="
-Redigere <a href=\"index.php?t=$_SESSON[fvtool]\">verktøy $_SESSION[fvtool]</a>
+Redigere <a href=\"index.php?t=$_SESSION[fvtool]\">verktøy $_SESSION[fvtool]</a>
 
 <form action=\"edittool.php\" method=\"post\" enctype=\"multipart/form-data\">
 

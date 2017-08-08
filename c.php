@@ -150,7 +150,7 @@ if ( !empty($_GET["td"]) ){
 			$qs = "delete from booking where tool=$_SESSION[fvtool] and date=\"$selector\" "; // don't touch by-hour-bookings
 			header("Location:c.php?t=$_SESSION[fvtool]&sm=$_GET[sm]"); // redirect to avoid refresh toggle loop
 		} else { // you are not the owner of this booking
-			$out .= "<b>OOPS! Det er ikke du som har booket den dagen. Kontakt <a href=\"tools.php?p=w&amp;w=". $booked[$selector]["id"]. "\">". $booked[$selector]["person"] . "</a> for nærmere avtale.</b><p>";
+			$out .= "<b>OOPS! Den dagen er det <a href=\"tools.php?p=w&amp;w=". $booked[$selector]["id"]. "\">". $booked[$selector]["person"] . "</a> som har booket. Trykk på navnet for å ta kontakt.</b><p>";
 		}
 //	echo "DEL $qs DEL";
 		$qr = $db->query($qs);
