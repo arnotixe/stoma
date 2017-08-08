@@ -33,6 +33,8 @@ if (empty($_SESSION['fvuser'])) {
 if ($_GET["t"] == "new") {
 	$qr = $db->query("insert into tool (name,person,owner) values (\"NyttVerktøy\",$_SESSION[fvuser],$_SESSION[fvuser])");
 	$_SESSION['fvtool'] = $db->insert_id; // last inserted tool
+	header("Location:edittool.php?t=$db->insert_id");
+	return; // redirect to newly created tool
 }
 
 
@@ -247,6 +249,7 @@ Dager mellom kalibreringer <input name=\"fcalibrationperiod\" value=\"$tool->cal
     <input type=\"hidden\" name=\"uploadaction\" value=\"uploading\">
     <input type=\"submit\" value=\"Lagre\" name=\"submit\">
 </form>
+<a href=\"edittool.php?t=new\">Nytt verktøy</a>
 <p>
 "; // this div is the calendar container
 
