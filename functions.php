@@ -109,8 +109,8 @@ function generatelogintoken($database, $usrid) {
         'remembertools',
          $selector.':'.base64_encode($authenticator),
          time() + 864000,
-         '/fv',
-         'teigseth.no',
+         $sitebase,
+         $siteurl,
          false, // true for TLS-only
          true  // http-only
     );

@@ -418,7 +418,7 @@ echo $out;
 // no qr code parameter: Display tools list
 
 echo "<div class=\"toolbox\" style=\"clear:left;\">
-<p>Bookingkalender-link:<img src=\"qr.php?c=http://teigseth.no/fv/m.php?t=$_SESSION[fvtool]\">
+<p>Bookingkalender-link:<img src=\"qr.php?c=$siteurl${sitebase}m.php?t=$_SESSION[fvtool]\">
 </div>";
 
 ?>

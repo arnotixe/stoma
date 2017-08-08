@@ -74,6 +74,12 @@ if (isset($_POST["flost"])) {
 	$flost = 0;
 }
 
+if ($_POST["fcalibrationperiod"] == "") {
+	$fcal=0;
+} else {
+	$fcal=$_POST[fcalibrationperiod]; // FIXME should get int value and sanity check it
+}
+
 // prep bools, etc
 	$qs =             "update tool set
 			  name=\"$_POST[fname]\",
@@ -84,7 +90,7 @@ if (isset($_POST["flost"])) {
 			  islost=$flost,
 			  owner=$_POST[fowner],
 			  nextcalibration=\"$_POST[fnextcalibration]\",
-			  calibrationperiod=$_POST[fcalibrationperiod]
+			  calibrationperiod=$fcal
 			  where ix=$_SESSION[fvtool]";
 
 //echo $qs . "<br>";

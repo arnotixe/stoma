@@ -485,8 +485,8 @@ echo $out;
 
 echo "
 <div class=\"toolbox\" style=\"clear:left;\">
-<p>Verktøylink: <a href=\"qr.php?d=1&amp;c=http://teigseth.no/fv/?t=$_SESSION[fvtool]\"><img src=\"qr.php?c=http://teigseth.no/fv/?t=$_SESSION[fvtool]\"></a>
-<p>Bookinglink: <a href=\"qr.php?d=1&amp;c=http://teigseth.no/fv/c.php?t=$_SESSION[fvtool]\"> <img src=\"qr.php?c=http://teigseth.no/fv/c.php?t=$_SESSION[fvtool]\"> </a>
+<p>Verktøylink: <a href=\"qr.php?d=1&amp;c=$siteurl$sitebase?t=$_SESSION[fvtool]\"><img src=\"qr.php?c=$siteurl$sitebase?t=$_SESSION[fvtool]\"></a>
+<p>Bookinglink: <a href=\"qr.php?d=1&amp;c=$siteurl$sitebasec.php?t=$_SESSION[fvtool]\"> <img src=\"qr.php?c=$siteurl$sitebasec.php?t=$_SESSION[fvtool]\"> </a>
 <p><a href=\"edittool.php?t=$_SESSION[fvtool]\">Rediger verktøy</a>
 </div>
 

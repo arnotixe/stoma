@@ -11,7 +11,7 @@ header('Content-Type: text/html; charset=utf-8');
    unset($_SESSION["fvuser"]); // delete session user
    unset($_SESSION["fvwh"]); // delete session warehouse
    unset($_SESSION["fvtool"]); // delete session tool
-   setcookie('remembertools', '',  time() -3600, '/fv', 'teigseth.no', false, true);
+   setcookie('remembertools', '',  time() -3600, $sitebase, $siteurl, false, true);
    logg(NULL,NULL,$usr,NULL,"User logged out");
 // should delete all entries in auth_tokens as well
 

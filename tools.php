@@ -191,7 +191,7 @@ $out .= "</div>";
 
 $out .= "
 <div class=\"toolbox\" style=\"clear:left;\">
-<p>Lagerlink:<img src=\"qr.php?c=http://teigseth.no/fv/?w=$_GET[w]\">
+<p>Lagerlink:<img src=\"qr.php?c=$siteurl$sitebase?w=$_GET[w]\">
 </div>
 
 ";
