@@ -488,6 +488,7 @@ echo "
 <p>Verktøylink: <a href=\"qr.php?d=1&amp;c=$siteurl$sitebase?t=$_SESSION[fvtool]\"><img src=\"qr.php?c=$siteurl$sitebase?t=$_SESSION[fvtool]\"></a>
 <p>Bookinglink: <a href=\"qr.php?d=1&amp;c=$siteurl${sitebase}c.php?t=$_SESSION[fvtool]\"> <img src=\"qr.php?c=$siteurl${sitebase}c.php?t=$_SESSION[fvtool]\"> </a>
 <p><a href=\"edittool.php?t=$_SESSION[fvtool]\">Rediger verktøy</a>
+ <p><a href=\"https://play.google.com/store/apps/details?id=me.scan.android.client&hl=en\">Her finner du en bra QR-kodescanner</a>.<br>Etter installasjon kan du åpne innstillinger og ta bort \"Ask before opening\" så går det enda raskere.
 </div>
 
 ";

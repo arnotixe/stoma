@@ -183,6 +183,9 @@ if ( !empty($_GET["u"])) {
 // end of box 2
 $out .= "</div>";
 
+$out .= "<div class=\"toolbox\" style=\"clear: left;\">";
+$out .= "<a href=\"https://play.google.com/store/apps/details?id=me.scan.android.client&hl=en\">Her finner du en bra QR-kodescanner</a>. Etter installasjon kan du åpne innstillinger og ta bort \"Ask before opening\" så går det enda raskere.";
+$out .= "</div>";
 
 echo "<html>
 <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
