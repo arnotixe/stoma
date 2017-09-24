@@ -137,7 +137,7 @@ $tagval = $_POST["tagpart1"] . $_POST["ftag"];
 	   if (move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file)) {
 //        echo "The file ". basename( $_FILES["fileToUpload"]["name"]). " has been uploaded.";
 	try {
-	    generateThumbnail("$target_file", 100, 50, 65);
+	    generateThumbnail("$target_file", 200, 50, 65);
 	}
 	catch (ImagickException $e) {
 	    echo $e->getMessage();
