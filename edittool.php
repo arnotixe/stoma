@@ -219,9 +219,10 @@ if ($nexttool > $mx->maxix) { // Bounds check
 }
 
 $out .="
-Redigere <a href=\"index.php?t=$_SESSION[fvtool]\">verktøy $_SESSION[fvtool]</a>
+Redigere <a href=\"index.php?t=$_SESSION[fvtool]\" title=\"Gå til\">verktøy $_SESSION[fvtool]</a>
 <a href=\"edittool.php?t=$prevtool\"><img src=\"pix/arrow_left.png\" style=\"width: 1em;\" title=\"Forrige\" alt=\"&lt;\"></a>
 <a href=\"edittool.php?t=$nexttool\"><img src=\"pix/arrow_right.png\" style=\"width: 1em;\" title=\"Neste\" alt=\"&gt;\"></a>
+<a href=\"admin.php\"><img src=\"pix/list-icon.png\" style=\"width: 1em;\" title=\"Adminside\" alt=\"---\"></a>
 
 <form action=\"edittool.php\" method=\"post\" enctype=\"multipart/form-data\">
 

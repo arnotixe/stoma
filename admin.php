@@ -56,21 +56,32 @@ $out .= "<h3>Verktøy</h3>
 <tr>
  <th>Verktøy</th>
  <th>TAG</th>
- <th>Serienr</th>
+ <th>Eier</th>
 </tr>
 ";
+// <th>Serienr</th>
 
 // FIXME add admin layer (division) here
 // if only division admin
-if ($qr = $db->query("select tag,serialno,name,persname,person.division,tool.ix from tool,person where tool.owner=person.ix and division=$fvusr->division and bookhours=0 order by name")) {
+if ($qr = $db->query("select tag,serialno,name,persname,person.division,tool.ix,owner
+                      from tool,person
+                      where tool.owner=person.ix
+                       and division=$fvusr->division
+                       and bookhours=0
+                      order by tag")) {
 
 	while ($tool = $qr->fetch_object()) {
 		$out .= "<tr>
-		 <td><a href=\"edittool.php?t=$tool->ix\">$tool->name</a></td>
+		 <td><a href=\"edittool.php?t=$tool->ix\">$tool->name</a>($tool->persname)</td>
 		 <td><a href=\"edittool.php?t=$tool->ix\">$tool->tag</a></td>
-		 <td><a href=\"edittool.php?t=$tool->ix\">$tool->serialno</a></td>
+		 <td><a href=\"editpers.php?t=$tool->owner\">$tool->persname</a></td>
 		</tr>\n";
-/*		$out .= "
+/*	
+
+		 <td><a href=\"edittool.php?t=$tool->ix\">$tool->serialno</a></td>
+
+
+	$out .= "
 		<a href=\"index.php?t=$tool->ix\">$tool->name</a> -
 		<a href=\"edittool.php?t=$tool->ix\">Rediger</a>
 		<br>";*/
@@ -144,6 +155,11 @@ table.sortable thead {
     font-weight: bold;
     cursor: default;
 }
+/* tr:nth-child(even), */
+table.sortable td:nth-child(even) {
+    background-color:#D2FED2;
+}
+
  /* unvisited link */
 a:link {
     color: darkgreen;
@@ -183,9 +199,6 @@ body {
 }
 .center {
 	text-align: center;
-}
-tr:nth-child(2) {
-	background: #BAF0BA;
 }
 .actionmsg {
     margin:20px 20px;
