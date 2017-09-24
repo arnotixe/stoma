@@ -72,7 +72,7 @@ if ($qr = $db->query("select tag,serialno,name,persname,person.division,tool.ix,
 
 	while ($tool = $qr->fetch_object()) {
 		$out .= "<tr>
-		 <td><a href=\"edittool.php?t=$tool->ix\">$tool->name</a>($tool->persname)</td>
+		 <td><a href=\"edittool.php?t=$tool->ix\">$tool->name</a></td>
 		 <td><a href=\"edittool.php?t=$tool->ix\">$tool->tag</a></td>
 		 <td><a href=\"editpers.php?t=$tool->owner\">$tool->persname</a></td>
 		</tr>\n";
