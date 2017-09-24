@@ -28,10 +28,25 @@ if (empty($_SESSION['fvuser'])) {
 	return;
 }
 
+// get logged in person's info
+if ($qr = $db->query("select * from person where ix=$_SESSION[fvuser]")) {
+        $fvusr = $qr->fetch_object();
+}
+
+// check if admin
+if ($fvusr->adminlevel < 1 ) {
+        echo "You (#$_SESSION[fvuser], $fvusr->persname) are not an admin.";
+        return;
+}
+
 
 // check for special tool value "new" (create new tool, go to blank page)
 if ($_GET["t"] == "new") {
-	$qr = $db->query("insert into tool (name,person,owner) values (\"NyttVerktøy\",$_SESSION[fvuser],$_SESSION[fvuser])");
+
+// set tool ownership to creator by default
+//	$qr = $db->query("insert into tool (name,person,owner) values (\"NyttVerktøy\",$_SESSION[fvuser],$_SESSION[fvuser])");
+// set tool ownership to warehouse 2 (FIXME should be a global/company variable)
+	$qr = $db->query("insert into tool (name,person,owner,tag) values (\"NyttVerktøy\",2,2,\"230-\")"); // hardwired to holder&owner=2, not good.
 	$_SESSION['fvtool'] = $db->insert_id; // last inserted tool
 	header("Location:edittool.php?t=$db->insert_id");
 	return; // redirect to newly created tool
@@ -82,10 +97,12 @@ if ($_POST["fcalibrationperiod"] == "") {
 	$fcal=$_POST[fcalibrationperiod]; // FIXME should get int value and sanity check it
 }
 
+$tagval = $_POST["tagpart1"] . $_POST["ftag"];
+
 // prep bools, etc
 	$qs =             "update tool set
 			  name=\"$_POST[fname]\",
-			  tag=\"$_POST[ftag]\",
+			  tag=\"$tagval\",
 			  serialno=\"$_POST[fserialno]\",
 			  bookhours=$fbset,
 			  shared=$fshar,
@@ -185,22 +202,75 @@ $tool = $qr->fetch_object();
 $thbref .= time();
 
 // DRAW FORM
+$prevtool=intval($_SESSION["fvtool"]) -1;
+if ($prevtool <1) { // Bounds check
+  $prevtool = 1;
+}
+$nexttool=intval($_SESSION["fvtool"]) +1;
+
+$mtq = $db->query("select MAX(ix) as maxix from tool");
+$mx = $mtq->fetch_object();
+
+//DEBUG
+//var_dump($mx);
+if ($nexttool > $mx->maxix) { // Bounds check
+  //$nexttool = $mx->maxix;
+  $nexttool = "new"; // create new on out of bounds
+}
+
 $out .="
 Redigere <a href=\"index.php?t=$_SESSION[fvtool]\">verktøy $_SESSION[fvtool]</a>
+<a href=\"edittool.php?t=$prevtool\"><img src=\"pix/arrow_left.png\" style=\"width: 1em;\" title=\"Forrige\" alt=\"&lt;\"></a>
+<a href=\"edittool.php?t=$nexttool\"><img src=\"pix/arrow_right.png\" style=\"width: 1em;\" title=\"Neste\" alt=\"&gt;\"></a>
 
 <form action=\"edittool.php\" method=\"post\" enctype=\"multipart/form-data\">
 
 Navn <input name=\"fname\" value=\"$tool->name\"><br>
-TAG <input name=\"ftag\" value=\"$tool->tag\"><br>
+TAG <select name=\"tagpart1\" title=\"Ny: skriv taggen i feltet (feks 230-1234)\">";
+
+// get unique list
+// thanks to https://stackoverflow.com/questions/5734504/mysql-left-part-of-a-string-split-by-a-separator-string
+$tpq = $db->query("SELECT SUBSTRING_INDEX(tag, '-', 1) as pfx from tool where tag like '%-%' group by pfx order by pfx");
+while ($tp = $tpq->fetch_object() ) {
+  $tagprefixes[] = $tp->pfx;
+}
+
+$splittag=strpos($tool->tag, "-"); // find hyphen
+
+if ($splittag == 0 ){
+   $out .= "<option value=\"\" selected>(Ny)</option>\n";
+   $tag1 = "";
+   $tag2 = $tool->tag;
+} else {
+   $out .= "<option value=\"\">(Ny)</option>\n";
+   $tag1 = substr($tool->tag,0,$splittag); // SIR-
+   $tag2 = substr($tool->tag,$splittag+1,100); // -001
+}
+
+//var_dump($tag1);
+//var_dump($tag2);
+foreach($tagprefixes as $tp) {
+//var_dump($tp);
+   if ($tag1 == $tp) {
+      $out .= "<option value=\"$tp-\" selected>$tp</option>\n";
+   } else {
+      $out .= "<option value=\"$tp-\">$tp</option>\n";
+   }
+}
+
+
+$out .= "</select>
+<input name=\"ftag\" value=\"$tag2\"><br>
 Serienummer <input name=\"fserialno\" value=\"$tool->serialno\"><br>";
+
 
 $chktxt = "";
 if ($tool->bookhours == 1) {
 	$chktxt = "checked";
 }
+// this is hidden for now, on ØK request
+$out .= "<span style=\"display:none;\">Møterom <input type=\"checkbox\" name=\"fbookhours\" $chktxt><br></span>";
 
-
-$out .= "Møterom <input type=\"checkbox\" name=\"fbookhours\" $chktxt><br>";
 
 $chktxt = "";
 if ($tool->shared == 1) {
@@ -235,21 +305,38 @@ if ($prs->ix == $tool->owner) {
 }
 
 
+$chktxt = "";
+$showcalib="style=\"display:none;\"";
+if ($tool->calibrationperiod > 0) {
+        $chktxt = "checked";
+	$showcalib=""; // just remove hide css
+}
+
+// FIXME need to add js to hide/show span
 
 $out .= "</select><br>
-Neste kalibrering <input type=\"date\" name=\"fnextcalibration\" value=\"$tool->nextcalibration\"><br>
-Dager mellom kalibreringer <input name=\"fcalibrationperiod\" value=\"$tool->calibrationperiod\"><br>
 
-<a href =\"uploads/$_SESSION[fvtool].jpg\" target=\"_blank\"><img src=\"uploads/$_SESSION[fvtool]_thumb.jpg?$thbref\" alt=\"ikke noe bilde (ennå)\"></a>
-    Bilde:
+Kalibrere? <input type=\"checkbox\" id=\"calibtogl\" name=\"fcalibrate\" $chktxt onChange=\"calibtoggle();\"><br>
+<span id=\"calibspan\" $showcalib>
+Dager mellom kalibreringer <input  name=\"fcalibrationperiod\" value=\"$tool->calibrationperiod\"><br>
+Neste kalibrering <input type=\"date\" name=\"fnextcalibration\" value=\"$tool->nextcalibration\"><br>
+</span>
+
+<div style=\"border: 1px solid; display:inline-block;clear:left;\">
+<a href =\"uploads/$_SESSION[fvtool].jpg\" target=\"_blank\">
+    <img src=\"uploads/$_SESSION[fvtool]_thumb.jpg?$thbref\" style=\"width: 10em;\" alt=\"ikke noe bilde (ennå)\"></a><br>
     <input type=\"file\" name=\"fileToUpload\" id=\"fileToUpload\"><BR>
-<a href =\"uploads/$_SESSION[fvtool]_c.jpg\" target=\"_blank\"><img src=\"uploads/$_SESSION[fvtool]_c_thumb.jpg?$thbref\" alt=\"(finnes ikke)\"></a>
-    Kalibreringssertifikat:
+</div><br>
+<div style=\"border: 1px solid; display:inline-block;clear:left;\">
+<a href =\"uploads/$_SESSION[fvtool]_c.jpg\" target=\"_blank\">
+    <img src=\"uploads/$_SESSION[fvtool]_c_thumb.jpg?$thbref\" style=\"width: 10em;\" alt=\"ikke noe kalibreringssertifikat (ennå)\"></a><br>
     <input type=\"file\" name=\"calibToUpload\" id=\"calibToUpload\"><br>
+</div><p>
     <input type=\"hidden\" name=\"uploadaction\" value=\"uploading\">
     <input type=\"submit\" value=\"Lagre\" name=\"submit\">
 </form>
-<a href=\"edittool.php?t=new\">Nytt verktøy</a>
+<hr>
+<a href=\"edittool.php?t=new\">Nytt verktøy</a> - <a href=\"admin.php\">Adminside</a>
 <p>
 "; // this div is the calendar container
 
@@ -371,6 +458,20 @@ tr:nth-child(2) {
 	display: inline-block;
 }
 </style>
+<script>
+function calibtoggle() {
+    var calibspan =     document.getElementById('calibspan');
+    var calibtogl =     document.getElementById('calibtogl');
+
+    if (calibtogl.checked) {
+    	calibspan.style = \"\";
+    	// should add appear transitions here
+    } else {
+    	calibspan.style = \"display:none;\"; 
+    	// should add appear transitions here
+    }
+}
+</script>
 <body>";
 echo $out;
 

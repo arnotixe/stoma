@@ -51,19 +51,35 @@ if ($fvusr->adminlevel < 1 ) {
 $out .= "<h2>Administrasjon</h2>";
 
 // LIST TOOLS
-$out .= "<h3>Verktøy</h3>";
+$out .= "<h3>Verktøy</h3>
+<table class=\"sortable\">
+<tr>
+ <th>Verktøy</th>
+ <th>TAG</th>
+ <th>Serienr</th>
+</tr>
+";
 
 // FIXME add admin layer (division) here
 // if only division admin
-if ($qr = $db->query("select name,persname,person.division,tool.ix from tool,person where tool.owner=person.ix and division=$fvusr->division and bookhours=0 order by name")) {
+if ($qr = $db->query("select tag,serialno,name,persname,person.division,tool.ix from tool,person where tool.owner=person.ix and division=$fvusr->division and bookhours=0 order by name")) {
+
 	while ($tool = $qr->fetch_object()) {
-		$out .= "
+		$out .= "<tr>
+		 <td><a href=\"edittool.php?t=$tool->ix\">$tool->name</a></td>
+		 <td><a href=\"edittool.php?t=$tool->ix\">$tool->tag</a></td>
+		 <td><a href=\"edittool.php?t=$tool->ix\">$tool->serialno</a></td>
+		</tr>\n";
+/*		$out .= "
 		<a href=\"index.php?t=$tool->ix\">$tool->name</a> -
 		<a href=\"edittool.php?t=$tool->ix\">Rediger</a>
-		<br>";
+		<br>";*/
+
 	}
-	$out .= "<a href=\"edittool.php?t=new\"> - - Nytt verktøy- - </a><br>";
 }
+
+$out .= "</table>";
+$out .= "<a href=\"edittool.php?t=new\"> - - Nytt verktøy- - </a><br>";
 
 // LIST MEETING ROOMS
 $out .= "<h3>Møterom</h3>";
@@ -109,14 +125,25 @@ if ($qr = $db->query("select * from person where division=$fvusr->division and i
 	$out .= "<a href=\"editpers.php?t=new\"> - - Nytt lager - - </a><br>";
 }
 
+$out .= "<h3>Innstillinger</h3>";
 
+$out .= "Her kommer eventuelle globale innstillinger (nytt verktøy default i lager…, Tag starter med…)";
 
 // page starts here
 echo "<html>
 <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
 $metarefresh
+<script src=\"js/sorttable.js\"></script>
 <title>Fellesverktøy</title>
 <style>
+
+/* Sortable tables */
+table.sortable thead {
+    background-color:#00ec3d;
+    color:#666666;
+    font-weight: bold;
+    cursor: default;
+}
  /* unvisited link */
 a:link {
     color: darkgreen;

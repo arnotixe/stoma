@@ -57,12 +57,16 @@ if (empty($_SESSION['fvuser']) && !empty($_COOKIE['remembertools'])) {
 }
 */
 
+if ($_GET["t"] == "") {
+   $_SESSION['fvtool'] = 1; // set default (Tool 1 should be describing this tool management system)
+}
 
 
 // these variables are sessioned to pass them on to login and other pages
 if (!empty($_GET["t"])) {
    $_SESSION['fvtool'] = $_GET["t"]; // tool code scanned? Update only if specified
-// don't recycle  $_SESSION["fvpush"]
+
+// don't recycle  $_SESSION["fvpush"] (scan-to-push-to…?)
    unset($_SESSION["fvpush"]);
    unset($_SESSION['fvwh']);
 }
@@ -102,6 +106,15 @@ if (empty($_SESSION['fvuser'])) {
 	header('Location:login.php');
 return;
 }
+
+
+// get logged in person's info, like if he's an $fvusr->adminlevel > 0
+if ($qr = $db->query("select * from person where ix=$_SESSION[fvuser]")) {
+        $fvusr = $qr->fetch_object();
+}
+
+
+
 
 // hobby login: index.php?us=1 or whatever user
 /*
@@ -197,10 +210,15 @@ if ($result = $db->query("SELECT * from tool where ix=$spectool limit 1")) {
 //    printf("Select returned %d rows.\n", $result->num_rows);
    if ($row = $result->fetch_object()){ // bør kun returnere 1...
 // DEBUGGING
+$adminstuff="editstuff";
+if ($fvusr->adminlevel > 0) {
+$adminstuff="<a href=\"edittool.php?t=$_SESSION[fvtool]\"><img src=\"pix/edit-icon.png\" title=\"Redigér\" style=\"width:1em;\" alt=\"Redigér\"></img></a>";
+}
+
 	$out .= "
 		<div class=\"contain\">
 		<div class=\"toolbox\">
-		 Verktøyet: <b>$row->name</b> (#$spectool) hører hjemme hos $owner->persname; nå er det hos:
+		 Verktøyet: <b>$row->name</b>$adminstuff (#$spectool) hører hjemme hos $owner->persname; nå er det hos:
 		<div class=\"holder\">
 		 $person->persname<br>
 		 <a href=\"tel:$phone\"><img class=\"tl\" src=\"pix/phone.png\" alt=\"Ring\"></a>
@@ -377,6 +395,9 @@ if ($result = $db->query("SELECT * from tool where ix=$spectool limit 1")) {
 //if () {
 // }
 
+// force thumbnail refresh
+$thbref .= time();
+
 // need tool owner for tools page
 $out .= "
 </div>
@@ -387,7 +408,7 @@ $out .= "
 <a href=\"persons.php\"><img  class=\"tl\" src=pix/persons.png alt=\"Personliste\" title=\"Personliste\"></a><br>
 </div>
 <div class=\"toolbox\" style=\"clear:left;\">
-<a href=\"uploads/$_SESSION[fvtool].jpg\"><img src=\"uploads/$_SESSION[fvtool]_thumb.jpg\" alt=\"(har ikke bilde)\"></a><br>
+<a href=\"uploads/$_SESSION[fvtool].jpg\" target=\"_blank\"><img src=\"uploads/$_SESSION[fvtool]_thumb.jpg?thbref\" alt=\"(har ikke bilde)\"></a><br>
 Serienr: $row->serialno<br>
 Neste kalibrering: $row->nextcalibration<br>
 </div>
@@ -476,18 +497,25 @@ body {
 echo $out;
 
 // $sndout could be put in up there, but will probably be annoying :)
-
+// turns out it's actually blocked by browsers...
 
 // check if this tool's division is the same as logged-in user's
 //echo "Assign Tool no $_GET[t] to logged-in user $usr";
 
 // no qr code parameter: Display tools list
 
+// stuff that only admins should see
+$adminstuff="";
+if ($fvusr->adminlevel > 0) {
+$adminstuff="<p><a href=\"edittool.php?t=$_SESSION[fvtool]\">Rediger verktøy</a>
+ <p><a href=\"admin.php\">Adminside</a>";
+}
+
 echo "
 <div class=\"toolbox\" style=\"clear:left;\">
 <p>Verktøylink: <a href=\"qr.php?d=1&amp;c=$siteurl$sitebase?t=$_SESSION[fvtool]\"><img src=\"qr.php?c=$siteurl$sitebase?t=$_SESSION[fvtool]\"></a>
 <p>Bookinglink: <a href=\"qr.php?d=1&amp;c=$siteurl${sitebase}c.php?t=$_SESSION[fvtool]\"> <img src=\"qr.php?c=$siteurl${sitebase}c.php?t=$_SESSION[fvtool]\"> </a>
-<p><a href=\"edittool.php?t=$_SESSION[fvtool]\">Rediger verktøy</a>
+$adminstuff
  <p><a href=\"https://play.google.com/store/apps/details?id=me.scan.android.client&hl=en\">Her finner du en bra QR-kodescanner</a>.<br>Etter installasjon kan du åpne innstillinger og ta bort \"Ask before opening\" så går det enda raskere.
 </div>
 

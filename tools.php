@@ -36,6 +36,11 @@ if (empty($_SESSION['fvuser'])) {
 	return;
 }
 
+// get, amotg other things, admin status into fvusr
+if ($qr = $db->query("select * from person where ix=$_SESSION[fvuser]")) {
+        $fvusr = $qr->fetch_object();
+}
+
 
 // html scripts
 $scripts = "";
@@ -49,6 +54,8 @@ if ($qr = $db->query("select * from person where ix=" . mysql_escape_string($_GE
 
 $whouse = $qr->fetch_object();
 
+if ($_GET["all"] == "comp") {
+} else {
 echo "
 <div class=\"toolbox\">
 Kontaktinfo for $whouse->persname (<a href=\"persons.php\">vis alle</a>)
@@ -58,10 +65,8 @@ Kontaktinfo for $whouse->persname (<a href=\"persons.php\">vis alle</a>)
                  <a href=\"mailto:$whouse->mail?subject=Hei&amp;body=Hei, det er meg\"><img class=\"tl\"  src=\"pix/mail.png\" alt=\"Mail\"></a><p>
                 </div>
 </div>
-<div class=\"toolbox\">
-
-";
-
+<div class=\"toolbox\">";
+}
 
 switch ($_GET["p"]) { //show what for person get[w]?
 	case "w": // show all belonging to warehouse/person
@@ -92,7 +97,14 @@ switch ($_GET["p"]) { //show what for person get[w]?
 		       where tool.person=person.ix and owner.ix=tool.owner and owner.ix=$_SESSION[fvwh]
 		       $limiters
 		       order by toolname asc, holdername asc";
-//		$out .= $qs;
+
+		// override qs on displayALL tools in company
+		if ($_GET["all"] == "comp") {
+		$qs = "select tool.ix as tix, concat(tool.name, ' (', ifnull(tool.tag, '-') , ')') as toolname, person.ix as hix,owner.persname as ownername, person.persname as holdername
+		       from person,tool,person as owner
+		       where tool.person=person.ix and owner.ix=tool.owner
+		       order by toolname asc, holdername asc";
+		}
 
 		$whqry=$db->query($qs);
 		$tabl = "<table >
@@ -115,9 +127,16 @@ switch ($_GET["p"]) { //show what for person get[w]?
 		}
 		$tabl .= "</table>";
 
-		$out .= "<b>Verktøy <a href=\"tools.php?p=w&amp;w=$_GET[w]&amp;o=$_GET[o]\" class=\"ul\">tilhørende</a>/<a href=\"tools.php?p=h&amp;w=$_GET[w]&amp;o=$_GET[o]\">ihende</a>
+		if ($_GET["all"] == "comp") {
+			$out .= "<b>Alle verktøy
+		         </b>";
+		} else {
+			$out .= "<b>Verktøy <a href=\"tools.php?p=w&amp;w=$_GET[w]&amp;o=$_GET[o]\" class=\"ul\">tilhørende</a>/<a href=\"tools.php?p=h&amp;w=$_GET[w]&amp;o=$_GET[o]\">ihende</a>
 			<a href=\"persons.php\">$whouse->persname</a>: $links
-		         </b><br>Kontakt $whouse->persname: (linker her)";
+		         </b>";
+		}
+// FIXME show on admins only
+		$out .= "";
 
 		$out .= "<p>$tabl";
 		break;
@@ -176,8 +195,9 @@ switch ($_GET["p"]) { //show what for person get[w]?
 //		$out .= "<b>Verktøy $warehouse har: $links";
 		$out .= "<b>Verktøy <a href=\"tools.php?p=w&amp;w=$_GET[w]&amp;o=$_GET[o]\">tilhørende</a>/<a href=\"tools.php?p=h&amp;w=$_GET[w]&amp;o=$_GET[o]\" class=\"ul\" >ihende</a>
 			<a href=\"persons.php\">$whouse->persname</a>: $links
-				         </b><br>Kontakt $whouse->persname: (linker her)";
-
+				         </b>";
+		if ($fvusr->adminlevel > 0 ) {
+		}
 		$out .= "</b><p>$tabl";
 		break;
 	default:// show is empty, show all in company/division
@@ -187,14 +207,17 @@ $out .= "</div>";
 
 
 // add warehouse QR code
-//if () { // check if logged in person is admin
-
-$out .= "
-<div class=\"toolbox\" style=\"clear:left;\">
-<p>Lagerlink:<img src=\"qr.php?c=$siteurl$sitebase?w=$_GET[w]\">
-</div>
-
-";
+// DEBUG
+// echo "ADMINLEVEL $fvusr->adminlevel ";
+if ($_GET["all"] <> "comp") {
+if ($fvusr->adminlevel > 0 ) {
+	$out .= "
+	<div class=\"toolbox\" style=\"clear:left;\">
+	<p>Lagerlink:<img src=\"qr.php?c=$siteurl$sitebase?w=$_GET[w]\">
+         <p><a href=\"admin.php\">Adminside</a>
+	</div>";
+} // if admin
+} // if alltools
 
 } else {  // if query didn't go well
 	$out .= "Invalid page parameters.";
