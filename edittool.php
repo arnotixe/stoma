@@ -302,7 +302,7 @@ if ($prs->ix == $tool->owner) {
         $chktxt = "selected";
 }
 
-	$out .= "<option value=\"$prs->ix\" $chktxt >$prs->persname</option>";
+	$out .= "  <option value=\"$prs->ix\" $chktxt >$prs->persname</option>\n";
 }
 
 
@@ -342,6 +342,8 @@ Neste kalibrering <input type=\"date\" name=\"fnextcalibration\" value=\"$tool->
 "; // this div is the calendar container
 
 
+// Page end
+$out .= "</body></html>";
 
 // page starts here
 echo "<html>

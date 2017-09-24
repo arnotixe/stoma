@@ -210,7 +210,7 @@ if ($result = $db->query("SELECT * from tool where ix=$spectool limit 1")) {
 //    printf("Select returned %d rows.\n", $result->num_rows);
    if ($row = $result->fetch_object()){ // bør kun returnere 1...
 // DEBUGGING
-$adminstuff="editstuff";
+$adminstuff="";
 if ($fvusr->adminlevel > 0) {
 $adminstuff="<a href=\"edittool.php?t=$_SESSION[fvtool]\"><img src=\"pix/edit-icon.png\" title=\"Redigér\" style=\"width:1em;\" alt=\"Redigér\"></img></a>";
 }
