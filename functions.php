@@ -11,6 +11,7 @@
 // random_bytes support
 // from https://github.com/paragonie/random_compat
 require_once('random_compat/lib/random.php');
+include('phpqrcode/qrlib.php');
 
   $db = new mysqli($dbhost, $dbuser, $dbpassword, $dbname);
 
@@ -50,6 +51,39 @@ require_once('random_compat/lib/random.php');
 
 
 // FUNCTIONS // // // // // //
+
+	function qrcode($codeText,$qrfnam,$tagval) { // returns nothing
+// PROCESS QR CODE
+//$codeText = $_SESSION[fvtool]; // content to qrencode
+//$qrfnam = "uploads/qrkode_$param.png";
+
+// write QR code to disk
+QRcode::png($codeText, $qrfnam,QR_ECLEVEL_L, 4); //http://phpqrcode.sourceforge.net/examples/index.php?example=006
+
+/* Create some objects */
+$image = new Imagick();
+$draw = new ImagickDraw();
+$pixel = new ImagickPixel( 'white' );
+
+// read qr code into memory
+$image = new Imagick($qrfnam);
+// text box
+$image->newImage(116, 20, $pixel);
+$draw->setFillColor('black');
+$draw->setFontSize( 15 );
+$draw->setGravity(Imagick::GRAVITY_CENTER);
+$image->annotateImage($draw, 0, 0, 0, "$tagval");
+$image->resetIterator();
+$qrout = $image->appendimages(true);
+
+$qrout->writeImage($qrfnam);
+
+//echo "AAA<img src=\"$qrfnam\">AAA"  ;
+
+	}
+
+
+
 
 	function logg($comp, $div, $pers, $tool, $txt) {
 		global $db;

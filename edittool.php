@@ -115,6 +115,14 @@ $tagval = $_POST["tagpart1"] . $_POST["ftag"];
 //echo $qs . "<br>";
 	$qr = $db->query($qs);
 
+
+
+// create tool link QR code
+qrcode("$siteurl$sitebase?t=$_SESSION[fvtool]","uploads/qrToolLink_$_SESSION[fvtool].png",$tagval);
+// create booking link QR code
+qrcode("$siteurl${sitebase}c.php?t=$_SESSION[fvtool]","uploads/qrToolBook_$_SESSION[fvtool].png","B:$tagval");
+
+
 // PROCESS picture upload
 
 //	$out .= "uploading a file";
@@ -336,6 +344,12 @@ Neste kalibrering <input type=\"date\" name=\"fnextcalibration\" value=\"$tool->
     <input type=\"hidden\" name=\"uploadaction\" value=\"uploading\">
     <input type=\"submit\" value=\"Lagre\" name=\"submit\">
 </form>
+VerktøyQR:
+<a href=\"qr.php?f=qrToolLink_$_SESSION[fvtool].png\">
+<img src=\"uploads/qrToolLink_$_SESSION[fvtool].png\"></a>
+Booking-QR:
+<a href=\"qr.php?f=qrToolBook_$_SESSION[fvtool].png\">
+<img src=\"uploads/qrToolBook_$_SESSION[fvtool].png\"></a>
 <hr>
 <a href=\"edittool.php?t=new\">Nytt verktøy</a> - <a href=\"admin.php\">Adminside</a>
 <p>

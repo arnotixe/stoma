@@ -208,12 +208,18 @@ $out .= "</div>";
 
 // add warehouse QR code
 // DEBUG
+
+// FIXME generate QR SHOULD BE DONE ONLY ONCE EVERY PERSON EDIT
+// refreshing on each page load for now
+qrcode("$siteurl$sitebase?w=$_GET[w]","uploads/qrWareLink_$_GET[w].png",$whouse->persname);
+
+
 // echo "ADMINLEVEL $fvusr->adminlevel ";
 if ($_GET["all"] <> "comp") {
 if ($fvusr->adminlevel > 0 ) {
 	$out .= "
 	<div class=\"toolbox\" style=\"clear:left;\">
-	<p>Lagerlink:<img src=\"qr.php?c=$siteurl$sitebase?w=$_GET[w]\">
+	<p>Lagerlink:<a href=\"qr.php?f=qrWareLink_$_GET[w].png\"><img src=\"uploads/qrWareLink_$_GET[w].png\"></a>
          <p><a href=\"admin.php\">Adminside</a>
 	</div>";
 } // if admin
