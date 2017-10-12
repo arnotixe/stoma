@@ -57,10 +57,13 @@ if (empty($_SESSION['fvuser']) && !empty($_COOKIE['remembertools'])) {
 }
 */
 
-if ($_GET["t"] == "") {
+
+//Fallback in case no tool is set
+/*
+if ($_SESSION["t"] == "") {
    $_SESSION['fvtool'] = 1; // set default (Tool 1 should be describing this tool management system)
 }
-
+*/
 
 // these variables are sessioned to pass them on to login and other pages
 if (!empty($_GET["t"])) {
@@ -74,6 +77,7 @@ if (!empty($_GET["t"])) {
 if (empty($_SESSION['fvtool']) && !empty($_SESSION['fvwh'])) { // no tool, set warehouse GET in case we return from login with no tool here... MESSY CODE sorry should have a returnlink "user came to see this"
 	$_GET["w"] = $_SESSION['fvwh'];
 }
+
 
 
 if (!empty($_GET["w"])) {
