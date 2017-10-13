@@ -18,6 +18,11 @@ header('Content-Type: text/html; charset=utf-8');
 // group by person holding
 
 
+
+// Set time zone; the booking calendar will be wrong by server-client time difference
+date_default_timezone_set('Europe/Oslo');
+
+
 // variables could be passed on to login
 if (!empty($_GET["t"])) {
    $_SESSION['fvtool'] = mysql_escape_string($_GET["t"]);   // tool no. code scanned?
@@ -159,6 +164,18 @@ if ( !empty($_GET["td"]) ){
 		// write to database as well
 		$qs = "insert into booking (person, tool, date) values ($_SESSION[fvuser],$_SESSION[fvtool],\"$selector\")";
 		$qr = $db->query($qs);
+
+		// Now run cron on that specific tool, to check if someone has it, and in that case mail them about it.
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, "$siteurl$sitebase" ."cron.php?p=$cronpasswd&st=$_SESSION[fvtool]&c_b=1"); // check booking status on that specific tool
+		curl_setopt($ch, CURLOPT_HEADER, 0);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+		$output = curl_exec($ch);
+		curl_close($ch);
+//DEBUG
+//echo $output;
+//return;
 		header("Location:c.php?t=$_SESSION[fvtool]&sm=$_GET[sm]"); // redirect to avoid refresh toggle loop
 	}
 }
@@ -194,6 +211,7 @@ for ($w=0; $w<=5; $w++) {
 
 		if ($lnkdate < time()) {
 			$lnk="#";
+			$bordoverride="gray"; // USE CSS!
 			$titl="Kan ikke booke i fortiden";
 		}
 
@@ -214,7 +232,7 @@ for ($w=0; $w<=5; $w++) {
 			$bordoverride="gray"; // USE CSS!
 			$linkoverride="gray"; // USE CSS!
 			$titl="Bla";
-			$lnk = "c.php?t=1&amp;sm=" . date('Y-m', strtotime($week_start. " + $cntr days"));
+			$lnk = "c.php?t=$_SESSION[fvtool]&amp;sm=" . date('Y-m', strtotime($week_start. " + $cntr days"));
 		}
 
 
