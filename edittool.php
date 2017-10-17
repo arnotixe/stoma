@@ -118,7 +118,7 @@ $tagval = $_POST["tagpart1"] . $_POST["ftag"];
 
 
 // create tool link QR code
-qrcode("$siteurl$sitebase?t=$_SESSION[fvtool]","uploads/qrToolLink_$_SESSION[fvtool].png",$tagval);
+qrcode("$siteurl$sitebase?t=$_SESSION[fvtool]","uploads/qrToolLink_$_SESSION[fvtool].png","Vnr:$tagval\n" . substr($_POST["fname"],0,20));
 // create booking link QR code
 qrcode("$siteurl${sitebase}c.php?t=$_SESSION[fvtool]","uploads/qrToolBook_$_SESSION[fvtool].png","B:$tagval");
 

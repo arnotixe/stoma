@@ -68,7 +68,7 @@ $pixel = new ImagickPixel( 'white' );
 // read qr code into memory
 $image = new Imagick($qrfnam);
 // text box
-$image->newImage(116, 20, $pixel);
+$image->newImage(116, 30, $pixel);
 $draw->setFillColor('black');
 $draw->setFontSize( 15 );
 $draw->setGravity(Imagick::GRAVITY_CENTER);
