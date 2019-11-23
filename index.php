@@ -70,7 +70,13 @@ if (empty($_SESSION['fvuser']) && !empty($_COOKIE['remembertools'])) {
 }
 */
 
+$metarefresh = ''; // avoid complaints on nonexistant stuff
+$thbref = ''; // avoid complaints on nonexistant stuff
 
+
+if (empty($_GET["a"])) {
+	$_GET["a"] = ''; // avoid complaints 
+}
 
 // these variables are sessioned to pass them on to login and other pages
 if (!empty($_GET["t"])) {
@@ -111,16 +117,11 @@ if (!empty($_GET["w"])) {
 // DEBUG
 // var_dump($_SESSION);
 //Fallback in case no tool is set
-
 if ($_SESSION["fvtool"] == "") {
    $_SESSION['fvtool'] = 1; // set default (Tool 1 should be describing this tool management system)
 }
 
-
-
-
 if (empty($_SESSION['fvuser'])) {
-//echo "You must login.";
 	header('Location:login.php');
 return;
 }
@@ -160,7 +161,7 @@ if( $usr <> 0) {
 
 // qr code parameter: Assign tool to yerself
 
-$spectool = mysql_escape_string($_SESSION["fvtool"]);
+$spectool = mysqli_escape_string($db, $_SESSION["fvtool"]);
 
 // html scripts
 $scripts = "";
@@ -312,7 +313,7 @@ $adminstuff="<a href=\"edittool.php?t=$_SESSION[fvtool]\"><img src=\"pix/edit-ic
 	 if ($_GET["a"] == "pt" ) { // push to
 	     $_SESSION["fvpush"] = "towarehouse";
 	     $out .= "$pickbuttons";
-		$pt = mysql_escape_string($_GET["pt"]);
+		$pt = mysqli_escape_string($db, $_GET["pt"]);
 		// Who has this tool?
 		$qs= "SELECT * from person where person.ix=$pt  limit 1";
 //		echo $qs;

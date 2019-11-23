@@ -25,7 +25,7 @@ date_default_timezone_set('Europe/Oslo');
 
 // variables could be passed on to login
 if (!empty($_GET["t"])) {
-   $_SESSION['fvtool'] = mysql_escape_string($_GET["t"]);   // tool no. code scanned?
+   $_SESSION['fvtool'] = mysqli_escape_string($db, $_GET["t"]);   // tool no. code scanned?
 }
 
 if (empty($_GET["p"])) { // if nothing specified, set to w
@@ -95,7 +95,7 @@ if ($nm == 13) {
 }
 
 // fetch tool info
-$qs = "select * from tool where ix=" . mysql_escape_string($_GET["t"]);
+$qs = "select * from tool where ix=" . mysqli_escape_string($db, $_GET["t"]);
 if ($tqr = $db->query($qs)) {
 	$tool=$tqr->fetch_object();
 }

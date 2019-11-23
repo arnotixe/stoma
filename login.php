@@ -65,7 +65,7 @@ if (!empty($_SESSION["fvtool"])) {
 // $out .= "TOOLID = $_SESSION[fvtool] ";
 
 // CHECK if tool exists
-$tl = mysql_escape_string($_SESSION["fvtool"]);
+$tl = mysqli_escape_string($db, $_SESSION["fvtool"]);
 
 $qs="SELECT division,company.name as cname, division.divname as divname, division.contactperson as pname, division.phone as pphone, division.mail as pmail
             from tool,person,company,division
@@ -106,7 +106,7 @@ TODO check warehouse etc here. Should match tool, etc
 
 // when fvwh is set, get division, company info from it
 if (!empty($_SESSION["fvwh"])) {
-	$tl = mysql_escape_string($_SESSION["fvwh"]);
+	$tl = iescape_string($_SESSION["fvwh"]);
 
 	$qs="SELECT division,company.name as cname, division.ix as division, division.divname as divname, division.contactperson as pname, division.phone as pphone, division.mail as pmail
             from person,company,division
@@ -128,7 +128,7 @@ $out .= "<div class=\"toolbox\" style=\"clear: left;\">";
 // If we got here, tool and/or warehouse are ok, and we've got a division
 
 if ( !empty($_POST["password"])) {
-	$usr = mysql_escape_string($_POST["fvuser"]);
+	$usr = mysqli_escape_string($db, $_POST["fvuser"]);
 
 //	$out .= "Supplied password for user $_POST[fvuser] was $_POST[password]. Could be good. Could be bad.";
   $qs="SELECT person.pin

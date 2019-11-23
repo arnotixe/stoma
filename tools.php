@@ -22,7 +22,7 @@ header('Content-Type: text/html; charset=utf-8');
 
 // variables could be passed on to login
 if (!empty($_GET["w"])) {
-   $_SESSION['fvwh'] = mysql_escape_string($_GET["w"]);   // warehouse no. code scanned?
+   $_SESSION['fvwh'] = mysqli_escape_string($db, $_GET["w"]);   // warehouse no. code scanned?
 }
 
 if (empty($_GET["p"])) { // if nothing specified, set to w
@@ -50,7 +50,7 @@ $out="";
 // get name of warehouse/person queried
 
 // nb if warehouse, check other fields (?) FIXME
-if ($qr = $db->query("select * from person where ix=" . mysql_escape_string($_GET["w"]))) {
+if ($qr = $db->query("select * from person where ix=" . mysqli_escape_string($db, $_GET["w"]))) {
 
 $whouse = $qr->fetch_object();
 
