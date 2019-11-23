@@ -1,5 +1,18 @@
 <?php
 
+// Same as error_reporting(E_ALL);
+//ini_set('error_reporting', E_ALL);
+
+// Report all PHP errors (see changelog)
+// error_reporting(E_ALL);
+// Report all PHP errors
+// error_reporting(-1);
+
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+
 // STOMA
 require("config.php");
 
@@ -58,12 +71,6 @@ if (empty($_SESSION['fvuser']) && !empty($_COOKIE['remembertools'])) {
 */
 
 
-//Fallback in case no tool is set
-/*
-if ($_SESSION["t"] == "") {
-   $_SESSION['fvtool'] = 1; // set default (Tool 1 should be describing this tool management system)
-}
-*/
 
 // these variables are sessioned to pass them on to login and other pages
 if (!empty($_GET["t"])) {
@@ -103,6 +110,13 @@ if (!empty($_GET["w"])) {
 
 // DEBUG
 // var_dump($_SESSION);
+//Fallback in case no tool is set
+
+if ($_SESSION["fvtool"] == "") {
+   $_SESSION['fvtool'] = 1; // set default (Tool 1 should be describing this tool management system)
+}
+
+
 
 
 if (empty($_SESSION['fvuser'])) {

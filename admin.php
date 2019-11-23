@@ -115,10 +115,10 @@ $out .= "<h3>Folk</h3>";
 if ($qr = $db->query("select * from person where division=$fvusr->division and iswarehouse=0 order by persname")) {
 	while ($pers = $qr->fetch_object()) {
 		$out .= "<a href=\"index.php?p=w&amp;w=$pers->ix\">$pers->persname</a> -
-		<a href=\"editpers.php?t=$pers->ix\">Rediger</a>
+		<a href=\"editpers.php?w=$pers->ix\">Rediger</a>
 		<br>";
 	}
-	$out .= "<a href=\"editpers.php?t=new\"> - - Ny person - - </a><br>";
+	$out .= "<a href=\"editpers.php?w=new\"> - - Ny person - - </a><br>";
 }
 
 
@@ -130,10 +130,10 @@ $out .= "<h3>Lagre</h3>";
 if ($qr = $db->query("select * from person where division=$fvusr->division and iswarehouse=1 order by persname")) {
 	while ($pers = $qr->fetch_object()) {
 		$out .= "<a href=\"index.php?p=w&amp;w=$pers->ix\">$pers->persname</a> -
-		<a href=\"editpers.php?t=$pers->ix\">Rediger</a>
+		<a href=\"editpers.php?w=$pers->ix\">Rediger</a>
 		<br>";
 	}
-	$out .= "<a href=\"editpers.php?t=new\"> - - Nytt lager - - </a><br>";
+	$out .= "<a href=\"editpers.php?w=new\"> - - Nytt lager - - </a><br>";
 }
 
 $out .= "<h3>Innstillinger</h3>";
